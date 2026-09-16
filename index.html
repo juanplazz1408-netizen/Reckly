@@ -1,0 +1,2560 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Reckly</title>
+
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Reckly">
+<meta name="theme-color" content="#152238">
+<meta name="format-detection" content="telephone=no">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://accounts.google.com https://cdnjs.cloudflare.com; connect-src 'self' https://sheets.googleapis.com https://www.googleapis.com https://oauth2.googleapis.com https://accounts.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; frame-src https://accounts.google.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.1/chart.umd.min.js"></script>
+<style>
+  :root{
+    --ink:#152238; --ink-soft:#3c4a63; --paper:#f0f3f7; --card:#ffffff; --line:#e4e8f0;
+    --mint:#2dd4a7; --mint-deep:#159a80; --mint-soft:#d9f5ec;
+    --up:#159a80; --up-soft:#d9f5ec;
+    --down:#c1443c; --down-soft:#fbe6e4; --radius:16px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  button, input, select, textarea{ font-family:inherit; }
+  html,body{margin:0; padding:0; background:var(--paper); overscroll-behavior-y:none; font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;}
+  .app{
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:var(--ink);
+    max-width:480px; margin:0 auto;
+    padding:calc(12px + env(safe-area-inset-top)) 14px 96px;
+    min-height:100vh; background:var(--paper);
+  }
+  .num{font-family:'Inter',-apple-system,sans-serif; font-variant-numeric:tabular-nums; font-feature-settings:'tnum' 1;}
+
+  header.top{display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; gap:8px;}
+  header.top .brand{display:flex; align-items:center; gap:8px;}
+  header.top .brand-badge{width:28px; height:28px; border-radius:8px; background:var(--ink); display:flex; align-items:center; justify-content:center; font-size:13px; color:var(--mint); font-weight:800; flex-shrink:0;}
+  header.top h1{font-size:16px; font-weight:800; letter-spacing:-.01em; color:var(--ink); margin:0;}
+  .icon-btn{
+    width:34px; height:34px; border-radius:10px; border:1px solid var(--line); background:var(--card);
+    display:flex; align-items:center; justify-content:center; font-size:15px; cursor:pointer; flex-shrink:0;
+    box-shadow:0 1px 2px rgba(21,34,56,.04);
+  }
+  .icon-btn:active{background:var(--line);}
+  .tc-dot{position:absolute; top:5px; right:5px; width:7px; height:7px; border-radius:50%; background:var(--mint-deep); border:1.5px solid var(--card);}
+  .hdr-actions{display:flex; gap:6px;}
+
+  .banner{
+    background:var(--mint-soft); border:1px solid var(--mint-deep); border-radius:12px; padding:10px 12px;
+    display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px; font-size:12.5px; color:#0d6650;
+  }
+  .banner button{
+    background:var(--ink); color:#fff; border:none; padding:8px 12px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; flex-shrink:0;
+  }
+
+  .ticker{background:linear-gradient(150deg, var(--ink) 45%, #0f3d34); color:#fff; border-radius:var(--radius); padding:18px; margin-bottom:14px; position:relative; overflow:hidden; box-shadow:0 10px 24px rgba(21,34,56,.18);}
+  .ticker::after{content:""; position:absolute; right:-40px; top:-50px; width:150px; height:150px; border-radius:50%; background:radial-gradient(circle, rgba(45,212,167,.32), transparent 70%); pointer-events:none;}
+  .ticker-row{display:flex; align-items:flex-start; justify-content:space-between; position:relative; z-index:1;}
+  .ticker .clickable{cursor:pointer;}
+  .ticker .label{font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; opacity:.65; margin-bottom:4px; display:flex; align-items:center; gap:5px;}
+  .ticker .label .chev{opacity:.6; font-size:9px;}
+  .ticker .total{font-size:30px; font-weight:700; letter-spacing:-.02em;}
+  .ticker .sub{font-size:11.5px; opacity:.6; margin-top:5px;}
+  .eye-btn{background:rgba(255,255,255,.14); border:none; width:32px; height:32px; border-radius:9px; color:#fff; font-size:14px; cursor:pointer; flex-shrink:0;}
+  .eye-btn:active{background:rgba(255,255,255,.24);}
+
+  .section-title{font-size:11.5px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-soft); margin:18px 2px 9px; display:flex; justify-content:space-between; align-items:center;}
+
+  .cuentas{display:grid; grid-template-columns:1fr 1fr; gap:9px;}
+  .cuenta-card{
+    background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px 12px 11px;
+    display:flex; flex-direction:column; gap:7px; cursor:pointer; position:relative;
+    box-shadow:0 1px 3px rgba(21,34,56,.05); transition:background .15s, border-color .15s;
+  }
+  .cuenta-card.excluded{opacity:.5;}
+  .cuenta-card .crow{display:flex; align-items:center; justify-content:space-between;}
+  .cuenta-badge{width:28px; height:28px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:14.5px; flex-shrink:0;}
+  .cuenta-eye{width:26px; height:26px; border-radius:8px; border:none; background:transparent; font-size:13px; cursor:pointer; color:var(--ink-soft); flex-shrink:0; position:relative; z-index:2; pointer-events:auto;}
+  .cuenta-eye:active{background:var(--paper);}
+  .cuenta-card .nombre{font-size:12px; font-weight:700; color:var(--ink-soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .cuenta-card .saldo{font-size:16.5px; font-weight:700;}
+  .cuenta-card .badge{font-size:9px; background:var(--up-soft); color:var(--up); padding:2px 6px; border-radius:6px; font-weight:700; align-self:flex-start;}
+  .cuenta-card.add{align-items:center; justify-content:center; color:var(--mint-deep); border-style:dashed; border-color:var(--mint-soft); font-size:22px; min-height:74px; box-shadow:none;}
+
+  .mov-list{display:flex; flex-direction:column; gap:7px;}
+  .mov-item{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:11px 12px; display:flex; align-items:center; gap:10px; box-shadow:0 1px 3px rgba(21,34,56,.05);}
+  .mov-icon{width:32px; height:32px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; flex-shrink:0;}
+  .mov-icon.in{background:var(--up-soft); color:var(--up);}
+  .mov-icon.out{background:var(--down-soft); color:var(--down);}
+  .mov-mid{flex:1; min-width:0;}
+  .mov-desc{font-size:13px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .mov-meta{font-size:11px; color:var(--ink-soft); margin-top:1px;}
+  .mov-amt{font-size:13.5px; font-weight:700; flex-shrink:0;}
+  .mov-amt.in{color:var(--up);} .mov-amt.out{color:var(--down);}
+  .empty{color:var(--ink-soft); font-size:12.5px; text-align:center; padding:22px 10px; border:1px dashed var(--line); border-radius:14px;}
+
+  .fab{
+    position:fixed; left:50%; transform:translateX(-50%); bottom:calc(16px + env(safe-area-inset-bottom));
+    background:var(--mint-deep); color:#fff; border:none; border-radius:999px; padding:14px 24px; font-size:14px; font-weight:700;
+    box-shadow:0 10px 22px rgba(21,154,128,.35); display:flex; align-items:center; gap:8px; cursor:pointer;
+    max-width:440px; width:calc(100% - 28px); justify-content:center;
+  }
+  .fab:active{filter:brightness(.95); transform:translateX(-50%) scale(.98);}
+
+  .sheet-overlay{position:fixed; inset:0; background:rgba(21,34,56,.45); display:flex; align-items:flex-end; justify-content:center; opacity:0; pointer-events:none; transition:opacity .18s ease; z-index:50;}
+  .sheet-overlay.show{opacity:1; pointer-events:auto;}
+  .sheet{background:var(--paper); width:100%; max-width:480px; border-radius:20px 20px 0 0; padding:18px 16px calc(18px + env(safe-area-inset-bottom)); transform:translateY(100%); transition:transform .22s ease; max-height:85vh; overflow-y:auto;}
+  .sheet-overlay.show .sheet{transform:translateY(0);}
+  .sheet h2{font-size:16px; margin:0 0 14px; font-weight:800;}
+  .field{margin-bottom:12px;}
+  .field label{display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-soft); margin-bottom:5px;}
+  .field input, .field select{width:100%; padding:12px 12px; border-radius:11px; border:1px solid var(--line); background:var(--card); font-size:15px; color:var(--ink); font-family:inherit;}
+  .field input.num-input{font-family:'Inter',sans-serif; font-variant-numeric:tabular-nums;}
+  .toggle2{display:flex; gap:8px;}
+  .toggle2 button{flex:1; padding:11px; border-radius:11px; border:1px solid var(--line); background:var(--card); font-size:13.5px; font-weight:700; color:var(--ink-soft); cursor:pointer;}
+  .toggle2 button.sel.in{background:var(--up-soft); border-color:var(--up); color:var(--up);}
+  .toggle2 button.sel.out{background:var(--down-soft); border-color:var(--down); color:var(--down);}
+  .sheet-actions{display:flex; gap:9px; margin-top:6px;}
+  .btn{flex:1; padding:13px; border-radius:11px; border:none; font-size:14px; font-weight:700; cursor:pointer;}
+  .btn.primary{background:var(--ink); color:#fff;}
+  .btn.ghost{background:var(--card); color:var(--ink-soft); border:1px solid var(--line);}
+  .btn.danger{background:var(--down-soft); color:var(--down);}
+  .btn:disabled{opacity:.4;}
+  .btn:active{filter:brightness(.95);}
+
+  .swrow{display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--line);}
+  .swrow:last-child{border-bottom:none;}
+  .swrow .swlabel{font-size:13.5px; font-weight:600;}
+  .swtoggle{width:44px; height:26px; border-radius:999px; background:var(--line); position:relative; cursor:pointer; transition:background .15s; flex-shrink:0;}
+  .swtoggle.on{background:var(--up);}
+  .swtoggle .knob{position:absolute; top:3px; left:3px; width:20px; height:20px; border-radius:50%; background:#fff; transition:left .15s; box-shadow:0 1px 3px rgba(0,0,0,.25);}
+  .swtoggle.on .knob{left:21px;}
+
+  .picker-row{display:flex; flex-wrap:wrap; gap:7px; margin-bottom:10px;}
+  .emoji-opt{width:36px; height:36px; border-radius:10px; background:var(--card); border:1px solid var(--line); display:flex; align-items:center; justify-content:center; font-size:17px; cursor:pointer;}
+  .emoji-opt.sel{border-color:var(--mint-deep); background:var(--mint-soft); box-shadow:0 0 0 1px var(--mint-deep) inset;}
+  .color-opt{width:28px; height:28px; border-radius:50%; cursor:pointer; border:2px solid transparent; box-shadow:0 0 0 1px var(--line);}
+  .color-opt.sel{border-color:#fff; box-shadow:0 0 0 2px var(--ink);}
+
+  .toast{position:fixed; top:calc(14px + env(safe-area-inset-top)); left:50%; transform:translateX(-50%) translateY(-140%); opacity:0; pointer-events:none; z-index:60; background:var(--ink); color:#fff; font-size:12.5px; font-weight:600; padding:9px 16px; border-radius:16px; transition:transform .25s ease, opacity .25s ease; white-space:normal; max-width:88vw; text-align:center; line-height:1.4;}
+  .toast.show{transform:translateX(-50%) translateY(0); opacity:1; pointer-events:auto;}
+
+  .status-line{font-size:11.5px; color:var(--ink-soft); display:flex; align-items:center; gap:6px; margin-bottom:14px;}
+  .dot{width:7px; height:7px; border-radius:50%; background:var(--down); flex-shrink:0;}
+  .dot.on{background:var(--up);}
+  .status-line.err{cursor:pointer; text-decoration:underline;}
+
+  .error-overlay{position:fixed; inset:0; background:rgba(21,34,56,.5); display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity .18s ease; z-index:70; padding:20px;}
+  .error-overlay.show{opacity:1; pointer-events:auto;}
+  .error-card{background:var(--card); border-radius:16px; padding:20px; max-width:400px; width:100%; max-height:80vh; overflow-y:auto;}
+  .error-card .etitle{display:flex; align-items:center; gap:8px; font-size:15px; font-weight:700; color:var(--down); margin-bottom:10px;}
+  .error-card .efriendly{font-size:13.5px; line-height:1.5; color:var(--ink); margin-bottom:14px;}
+  .error-card .etech-label{font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-soft); margin-bottom:5px;}
+  .error-card .etech{font-family:ui-monospace,monospace; font-size:11.5px; background:var(--paper); border:1px solid var(--line); border-radius:8px; padding:9px 10px; color:var(--ink-soft); word-break:break-word; margin-bottom:14px; max-height:110px; overflow-y:auto;}
+  .error-card .eactions{display:flex; gap:8px;}
+
+  .auto-item{background:var(--card); border:1px solid var(--line); border-radius:11px; padding:10px 11px; display:flex; align-items:center; gap:10px; margin-bottom:8px;}
+  .auto-mid{flex:1; min-width:0;}
+  .auto-title{font-size:12.5px; font-weight:700;}
+  .auto-meta{font-size:11px; color:var(--ink-soft); margin-top:1px;}
+  .auto-del{width:26px; height:26px; border-radius:8px; border:none; background:var(--down-soft); color:var(--down); font-size:13px; cursor:pointer; flex-shrink:0;}
+  .add-auto-btn{width:100%; padding:11px; border-radius:11px; border:1px dashed var(--mint-deep); background:var(--mint-soft); color:var(--mint-deep); font-size:13px; font-weight:700; cursor:pointer; margin-bottom:4px;}
+
+  .guide-link{display:block; width:100%; text-align:left; padding:12px 13px; border-radius:11px; border:1px solid var(--line); background:var(--card); font-size:13.5px; font-weight:600; color:var(--ink); cursor:pointer; margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;}
+  .guide-step{display:flex; gap:11px; margin-bottom:16px;}
+  .guide-num{width:26px; height:26px; border-radius:50%; background:var(--ink); color:#fff; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+  .guide-step-title{font-size:13.5px; font-weight:700; margin-bottom:3px;}
+  .guide-step-desc{font-size:12.5px; color:var(--ink-soft); line-height:1.5;}
+  .guide-step-desc code{background:var(--paper); padding:1px 5px; border-radius:5px; font-family:ui-monospace,monospace; font-size:11px; word-break:break-all;}
+
+  .page-indicator{display:flex; align-items:center; justify-content:center; gap:7px; margin-bottom:14px;}
+  .ind-dot{width:6px; height:6px; border-radius:50%; background:var(--line); transition:background .2s, width .2s;}
+  .ind-dot.active{background:var(--ink); width:16px; border-radius:4px;}
+  .ind-label{font-size:11.5px; font-weight:700; color:var(--ink-soft); margin-left:4px;}
+  .tc-activate-link{width:100%; margin-top:14px; padding:11px; border-radius:12px; border:1px dashed var(--line); background:transparent; color:var(--ink-soft); font-size:12px; font-weight:600; cursor:pointer;}
+  .tc-activate-link:active{background:var(--card);}
+  .pager-viewport{overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; scrollbar-width:none;}
+  .pager-viewport::-webkit-scrollbar{display:none;}
+  .pager-track{display:flex;}
+  .pager-page{flex:0 0 100%; min-width:100%; scroll-snap-align:start;}
+
+  .chart-card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px; margin-bottom:8px; box-shadow:0 1px 3px rgba(21,34,56,.05);}
+  .chart-canvas-wrap{position:relative; height:210px; margin-bottom:8px;}
+  .legend-row{display:flex; align-items:center; gap:8px; padding:7px 0; border-bottom:1px solid var(--line); font-size:12.5px;}
+  .legend-row:last-child{border-bottom:none;}
+  .legend-dot{width:10px; height:10px; border-radius:50%; flex-shrink:0;}
+  .legend-name{flex:1; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .legend-val{color:var(--ink-soft); font-size:11.5px; flex-shrink:0;}
+  .range-tabs{display:flex; gap:6px; margin-bottom:12px;}
+  .range-tab, .range-tab-tc{flex:1; padding:7px; border-radius:8px; border:1px solid var(--line); background:var(--card); font-size:11.5px; font-weight:700; color:var(--ink-soft); cursor:pointer; text-align:center;}
+  .range-tab.active, .range-tab-tc.active{background:var(--ink); color:#fff; border-color:var(--ink);}
+</style>
+</head>
+<body>
+
+<div class="app" id="app">
+  <header class="top">
+    <div class="brand">
+      <div class="brand-badge">$</div>
+      <h1>Reckly</h1>
+    </div>
+    <div class="hdr-actions">
+      <button class="icon-btn" id="btnRefresh" title="Actualizar">🔄</button>
+      <button class="icon-btn" id="btnTC" title="Tarjetas de crédito" style="position:relative;">💳<span class="tc-dot" id="tcDot" style="display:none;"></span></button>
+      <button class="icon-btn" id="btnSheetLink" title="Ver hoja" style="display:none;">📄</button>
+      <button class="icon-btn" id="btnSettings" title="Ajustes">⚙️</button>
+    </div>
+  </header>
+
+  <div class="banner" id="banner" style="display:none;">
+    <span>☁️ Conecta Google Drive para respaldar tus movimientos en la nube</span>
+    <button id="btnConnect">Conectar</button>
+  </div>
+
+  <div class="status-line" id="statusLine" style="display:none;">
+    <span class="dot" id="statusDot"></span>
+    <span id="statusText"></span>
+  </div>
+
+  <div class="page-indicator" id="pageIndicator">
+    <span class="ind-dot" data-i="0"></span>
+    <span class="ind-dot" data-i="1"></span>
+    <span class="ind-dot" data-i="2"></span>
+    <span class="ind-dot" data-i="3"></span>
+    <span class="ind-label" id="pageLabel">Cuentas</span>
+  </div>
+
+  <div class="pager-viewport" id="pagerViewport">
+    <div class="pager-track" id="pagerTrack">
+
+      <div class="pager-page" id="pageGraficas">
+        <div class="section-title">Distribución de cuentas</div>
+        <div class="chart-card">
+          <div class="chart-canvas-wrap"><canvas id="donutChart"></canvas></div>
+          <div class="empty" id="donutEmpty" style="display:none;">Activa al menos una cuenta en el total para ver esta gráfica.</div>
+          <div id="donutLegend"></div>
+        </div>
+
+        <div class="section-title">Evolución de saldos</div>
+        <div class="chart-card">
+          <div class="range-tabs">
+            <button class="range-tab" data-range="7">7D</button>
+            <button class="range-tab" data-range="30">30D</button>
+            <button class="range-tab active" data-range="365">1A</button>
+            <button class="range-tab" data-range="0">Todo</button>
+          </div>
+          <div class="chart-canvas-wrap"><canvas id="lineChart"></canvas></div>
+          <div class="empty" id="lineEmpty" style="display:none;">Todavía no tienes cuentas para graficar.</div>
+        </div>
+      </div>
+
+      <div class="pager-page" id="pageCuentas">
+        <div class="ticker">
+          <div class="ticker-row">
+            <div class="clickable" id="tickerInfo">
+              <div class="label">Saldo total disponible <span class="chev">▾</span></div>
+              <div class="total num" id="totalSaldo">$ 0</div>
+              <div class="sub" id="cuentasCount">Sin cuentas todavía</div>
+            </div>
+            <button class="eye-btn" id="btnEye">👁️</button>
+          </div>
+        </div>
+
+        <div class="section-title">Cuentas</div>
+        <div class="cuentas" id="cuentasGrid"></div>
+
+        <div class="section-title">Movimientos recientes</div>
+        <div class="mov-list" id="movList"></div>
+
+        <button class="tc-activate-link" id="btnActivarTC" style="display:none;">💳 ¿Usas tarjetas de crédito? Actívalas aquí</button>
+      </div>
+
+      <div class="pager-page" id="pageTarjetas">
+        <div class="ticker">
+          <div class="ticker-row">
+            <div class="clickable" id="tickerInfoTC">
+              <div class="label">Cupo total disponible <span class="chev">▾</span></div>
+              <div class="total num" id="totalTC">$ 0</div>
+              <div class="sub" id="tarjetasCount">Sin tarjetas todavía</div>
+            </div>
+            <button class="eye-btn" id="btnEyeTC">👁️</button>
+          </div>
+        </div>
+
+        <div class="section-title">Tarjetas de crédito</div>
+        <div class="cuentas" id="tarjetasGrid"></div>
+
+        <div class="section-title">Movimientos recientes</div>
+        <div class="mov-list" id="movListTC"></div>
+      </div>
+
+      <div class="pager-page" id="pageGraficasTC">
+        <div class="field" style="margin-bottom:14px;">
+          <label>Tarjeta a analizar</label>
+          <select id="graficaTCSelect"></select>
+        </div>
+
+        <div class="section-title">Uso actual del cupo</div>
+        <div class="chart-card">
+          <div class="chart-canvas-wrap"><canvas id="donutChartTC"></canvas></div>
+          <div class="empty" id="donutTCEmpty" style="display:none;">Agrega una tarjeta para ver esta gráfica.</div>
+          <div id="donutTCLegend"></div>
+        </div>
+
+        <div class="section-title">Evolución del uso del cupo</div>
+        <div class="chart-card">
+          <div class="range-tabs">
+            <button class="range-tab-tc" data-rangetc="7">7D</button>
+            <button class="range-tab-tc" data-rangetc="30">30D</button>
+            <button class="range-tab-tc active" data-rangetc="365">1A</button>
+            <button class="range-tab-tc" data-rangetc="0">Todo</button>
+          </div>
+          <div class="chart-canvas-wrap"><canvas id="lineChartTC"></canvas></div>
+          <div class="empty" id="lineTCEmpty" style="display:none;">Agrega una tarjeta para ver esta gráfica.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <button class="fab" id="btnAddMov">＋ Registrar movimiento</button>
+  <button class="fab" id="btnAddMovTC" style="display:none;">＋ Registrar movimiento</button>
+</div>
+
+<!-- Ajustes -->
+<div class="sheet-overlay" id="overlaySettings">
+  <div class="sheet">
+    <h2>Ajustes</h2>
+    <div class="sheet-actions" style="margin-bottom:14px;">
+      <button class="btn ghost" id="shareShortcutHelp">Compartir guía de Atajo</button>
+    </div>
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+      <div style="font-size:11px; color:var(--ink-soft);">Nombres exactos de tus cuentas:</div>
+      <button class="icon-btn" id="btnCopyAccounts" title="Copiar lista" style="width:28px; height:28px; font-size:12px;">📋</button>
+    </div>
+    <div id="shortcutAccountsList" style="font-size:12.5px; color:var(--ink); margin-bottom:16px; line-height:1.6;"></div>
+
+    <button class="guide-link" id="openGuideCC">📲 Guía: botón en Centro de Control <span>›</span></button>
+    <button class="guide-link" id="openGuideWidget">🧩 Guía: widget en pantalla de inicio <span>›</span></button>
+    <button class="guide-link" id="btnDisconnectGoogle" style="color:var(--down);">🔌 Desconectar Google Drive <span>›</span></button>
+
+    <div style="font-size:11px; color:var(--ink-soft); margin:14px 0 10px;">Reckly · build 2026-08-16-18</div>
+    <div class="sheet-actions">
+      <button class="btn primary" id="cancelSettings">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Activar/desactivar tarjetas de crédito -->
+<div class="sheet-overlay" id="overlayTC">
+  <div class="sheet">
+    <h2>💳 Tarjetas de crédito</h2>
+    <div class="swrow">
+      <span class="swlabel">Activar módulo de tarjetas</span>
+      <div class="swtoggle" id="swTcActivado"><div class="knob"></div></div>
+    </div>
+    <div style="font-size:11.5px; color:var(--ink-soft); margin-top:10px; line-height:1.5;">Si no usas tarjetas de crédito, puedes dejarlo apagado. Para desactivarlo después de usarlo, primero tienes que eliminar todas tus tarjetas creadas.</div>
+    <div class="sheet-actions" style="margin-top:16px;">
+      <button class="btn primary" id="closeOverlayTC">Listo</button>
+    </div>
+  </div>
+</div>
+
+<!-- Guía: Centro de Control -->
+<div class="sheet-overlay" id="overlayGuideCC">
+  <div class="sheet">
+    <h2>📲 Botón en Centro de Control</h2>
+    <div id="guideCCSteps"></div>
+    <div class="sheet-actions">
+      <button class="btn primary" id="closeGuideCC">Entendido</button>
+    </div>
+  </div>
+</div>
+
+<!-- Guía: Widget -->
+<div class="sheet-overlay" id="overlayGuideWidget">
+  <div class="sheet">
+    <h2>🧩 Widget en pantalla de inicio</h2>
+    <div id="guideWidgetSteps"></div>
+    <div class="sheet-actions">
+      <button class="btn primary" id="closeGuideWidget">Entendido</button>
+    </div>
+  </div>
+</div>
+
+<!-- Qué cuentas suman al total -->
+<div class="sheet-overlay" id="overlayTotalConfig">
+  <div class="sheet">
+    <h2>¿Qué cuentas suman al total?</h2>
+    <div id="totalConfigList"></div>
+    <div class="sheet-actions">
+      <button class="btn primary" id="closeTotalConfig">Listo</button>
+    </div>
+  </div>
+</div>
+
+<!-- Agregar / editar cuenta -->
+<div class="sheet-overlay" id="overlayCuenta">
+  <div class="sheet">
+    <h2 id="cuentaTitulo">Agregar cuenta</h2>
+    <div class="field">
+      <label>Nombre de la cuenta</label>
+      <input type="text" id="inCuentaNombre" placeholder="" maxlength="60">
+    </div>
+    <div class="field" id="fieldSaldoInicial">
+      <label>Saldo inicial</label>
+      <input type="text" id="inCuentaSaldo" class="num-input" placeholder="" inputmode="numeric">
+    </div>
+    <div class="field">
+      <label>Ícono (opcional)</label>
+      <div class="picker-row" id="emojiPicker"></div>
+    </div>
+    <div class="field">
+      <label>Color (opcional)</label>
+      <div class="picker-row" id="colorPicker"></div>
+    </div>
+    <div class="swrow">
+      <span class="swlabel">Incluir en el total disponible</span>
+      <div class="swtoggle on" id="swIncluir"><div class="knob"></div></div>
+    </div>
+    <div class="swrow">
+      <span class="swlabel">Tiene rendimiento (interés)</span>
+      <div class="swtoggle" id="swRendimiento"><div class="knob"></div></div>
+    </div>
+    <div class="field" id="fieldEA" style="display:none;">
+      <label>Tasa efectiva anual (E.A. %)</label>
+      <input type="number" id="inEA" class="num-input" placeholder="Ej. 12.5" inputmode="decimal">
+    </div>
+    <div class="swrow">
+      <span class="swlabel">Programar movimientos automáticos</span>
+      <div class="swtoggle" id="swProgramar"><div class="knob"></div></div>
+    </div>
+    <div id="automaticosSection" style="display:none; margin-top:8px;">
+      <div id="automaticosList"></div>
+      <button type="button" class="add-auto-btn" id="btnAddAutomatico">＋ Agregar programación</button>
+    </div>
+    <div class="sheet-actions">
+      <button class="btn ghost" id="cancelCuenta">Cancelar</button>
+      <button class="btn primary" id="saveCuenta">Guardar cuenta</button>
+    </div>
+    <div class="sheet-actions" id="deleteRow" style="display:none; margin-top:6px;">
+      <button class="btn danger" id="deleteCuenta">Eliminar esta cuenta</button>
+    </div>
+  </div>
+</div>
+
+<!-- Agregar programación automática -->
+<div class="sheet-overlay" id="overlayAutomatico">
+  <div class="sheet">
+    <h2>Programar movimiento automático</h2>
+    <div class="field">
+      <label>Tipo</label>
+      <div class="toggle2">
+        <button type="button" id="autoTipoIngreso" class="sel in">Ingreso</button>
+        <button type="button" id="autoTipoEgreso">Egreso</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Categoría (opcional)</label>
+      <select id="inAutoCategoria"></select>
+    </div>
+    <div class="field">
+      <label>Monto</label>
+      <input type="text" id="inAutoMonto" class="num-input" placeholder="" inputmode="numeric">
+    </div>
+    <div class="field">
+      <label>Descripción (opcional)</label>
+      <input type="text" id="inAutoDesc" placeholder="Ej. Nómina, Arriendo..." maxlength="200">
+    </div>
+    <div class="field">
+      <label>Fecha y hora del primer movimiento</label>
+      <input type="datetime-local" id="inAutoFecha">
+    </div>
+    <div class="field">
+      <label>Frecuencia</label>
+      <select id="selAutoFrecuencia">
+        <option value="una_vez">Solo una vez</option>
+        <option value="diaria">Diaria</option>
+        <option value="semanal">Semanal</option>
+        <option value="quincenal">Cada 15 días</option>
+        <option value="mensual" selected>Mensual (mismo día cada mes)</option>
+        <option value="anual">Anual</option>
+      </select>
+    </div>
+    <div class="sheet-actions">
+      <button class="btn ghost" id="cancelAutomatico">Cancelar</button>
+      <button class="btn primary" id="saveAutomatico">Agregar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Qué tarjetas suman al total -->
+<div class="sheet-overlay" id="overlayTotalTCConfig">
+  <div class="sheet">
+    <h2>¿Qué tarjetas suman al total?</h2>
+    <div id="totalTCConfigList"></div>
+    <div class="sheet-actions">
+      <button class="btn primary" id="closeTotalTCConfig">Listo</button>
+    </div>
+  </div>
+</div>
+
+<!-- Agregar / editar tarjeta de crédito -->
+<div class="sheet-overlay" id="overlayTarjeta">
+  <div class="sheet">
+    <h2 id="tarjetaTitulo">Agregar tarjeta</h2>
+    <div class="field">
+      <label>Nombre de la tarjeta</label>
+      <input type="text" id="inTarjetaNombre" placeholder="" maxlength="60">
+    </div>
+    <div class="field" id="fieldCupoInicial">
+      <label>Cupo disponible inicial</label>
+      <input type="text" id="inTarjetaCupo" class="num-input" placeholder="" inputmode="numeric">
+      <div style="font-size:11px; color:var(--ink-soft); margin-top:6px;">Cuánto cupo tenías disponible al momento de agregar la tarjeta. Después se ajusta solo con tus compras y pagos.</div>
+    </div>
+    <div class="field">
+      <label>Ícono (opcional)</label>
+      <div class="picker-row" id="emojiPickerTC"></div>
+    </div>
+    <div class="field">
+      <label>Color (opcional)</label>
+      <div class="picker-row" id="colorPickerTC"></div>
+    </div>
+    <div class="swrow">
+      <span class="swlabel">Incluir en el total de tarjetas</span>
+      <div class="swtoggle on" id="swIncluirTC"><div class="knob"></div></div>
+    </div>
+    <div class="sheet-actions">
+      <button class="btn ghost" id="cancelTarjeta">Cancelar</button>
+      <button class="btn primary" id="saveTarjeta">Guardar tarjeta</button>
+    </div>
+    <div class="sheet-actions" id="deleteRowTC" style="display:none; margin-top:6px;">
+      <button class="btn danger" id="deleteTarjeta">Eliminar esta tarjeta</button>
+    </div>
+  </div>
+</div>
+
+<!-- Registrar movimiento -->
+<div class="sheet-overlay" id="overlayMov">
+  <div class="sheet">
+    <h2>Registrar movimiento</h2>
+    <div class="field">
+      <label>Tipo</label>
+      <div class="toggle2">
+        <button type="button" id="tipoIngreso" class="sel in">Ingreso</button>
+        <button type="button" id="tipoEgreso">Egreso</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Cuenta</label>
+      <select id="inMovCuenta"></select>
+    </div>
+    <div class="field">
+      <label>Categoría (opcional)</label>
+      <select id="inMovCategoria"></select>
+    </div>
+    <div class="field">
+      <label>Monto</label>
+      <input type="text" id="inMovMonto" class="num-input" placeholder="" inputmode="numeric">
+    </div>
+    <div class="field">
+      <label>Descripción (opcional)</label>
+      <input type="text" id="inMovDesc" placeholder="Ej. Mercado, pago cliente..." maxlength="200">
+    </div>
+    <div class="sheet-actions">
+      <button class="btn ghost" id="cancelMov">Cancelar</button>
+      <button class="btn primary" id="saveMov">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Registrar movimiento de tarjeta -->
+<div class="sheet-overlay" id="overlayMovTC">
+  <div class="sheet">
+    <h2>Registrar movimiento de tarjeta</h2>
+    <div class="field">
+      <label>Tipo</label>
+      <div class="toggle2">
+        <button type="button" id="tcTipoCompra" class="sel out">Compra</button>
+        <button type="button" id="tcTipoPago">Pago</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Tarjeta</label>
+      <select id="inMovTCTarjeta"></select>
+    </div>
+    <div class="field">
+      <label>Monto</label>
+      <input type="text" id="inMovTCMonto" class="num-input" placeholder="" inputmode="numeric">
+    </div>
+    <div class="field">
+      <label>Descripción (opcional)</label>
+      <input type="text" id="inMovTCDesc" placeholder="Ej. Mercado, tecnología...">
+    </div>
+
+    <div class="field" id="fieldPagoCuenta" style="display:none;">
+      <label>¿Desde qué cuenta se paga?</label>
+      <select id="inMovTCCuentaPago"></select>
+    </div>
+
+    <div id="compraProgramarBlock">
+      <div class="swrow">
+        <span class="swlabel">Programar pago automático de compra</span>
+        <div class="swtoggle" id="swProgramarCompra"><div class="knob"></div></div>
+      </div>
+      <div id="programarCompraFields" style="display:none;">
+        <div class="field">
+          <label>¿A cuántas cuotas?</label>
+          <input type="number" id="inCompraCuotas" min="1" placeholder="Ej. 6">
+        </div>
+        <div class="field">
+          <label>Fecha y hora del primer pago</label>
+          <input type="datetime-local" id="inCompraFecha">
+        </div>
+        <div class="swrow">
+          <span class="swlabel">¿Aplica interés?</span>
+          <div class="swtoggle" id="swCompraInteres"><div class="knob"></div></div>
+        </div>
+        <div class="field" id="fieldCompraEA" style="display:none;">
+          <label>Tasa efectiva anual (E.A. %)</label>
+          <input type="number" id="inCompraEA" placeholder="Ej. 24" inputmode="decimal">
+        </div>
+        <div class="field">
+          <label>Cuenta que pagará las cuotas</label>
+          <select id="inCompraCuenta"></select>
+        </div>
+        <div style="font-size:11.5px; color:var(--ink-soft); margin:-4px 0 12px;" id="cuotaPreview"></div>
+      </div>
+    </div>
+
+    <div class="sheet-actions">
+      <button class="btn ghost" id="cancelMovTC">Cancelar</button>
+      <button class="btn primary" id="saveMovTC">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="error-overlay" id="errorOverlay">
+  <div class="error-card">
+    <div class="etitle">⚠️ <span id="errorTitle">No se pudo conectar</span></div>
+    <div class="efriendly" id="errorFriendly"></div>
+    <div class="etech-label">Detalle técnico (para revisar conmigo si sigue fallando)</div>
+    <div class="etech" id="errorTech"></div>
+    <div class="eactions">
+      <button class="btn ghost" id="errorCopy">Copiar detalle</button>
+      <button class="btn primary" id="errorClose">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  // Protección anti-clickjacking en JS: como GitHub Pages no permite headers HTTP
+  // reales, ni X-Frame-Options ni el "frame-ancestors" de CSP-vía-meta funcionan
+  // (los navegadores los ignoran fuera de un header HTTP verdadero). Este es el
+  // único mecanismo de respaldo posible en un sitio 100% estático: si la página
+  // se detecta cargada dentro de un iframe ajeno, se saca de ahí a la fuerza.
+  try{
+    if(window.top !== window.self){
+      window.top.location = window.self.location;
+    }
+  }catch(e){
+    // Si un dominio distinto intenta enmarcarla, el navegador puede bloquear el
+    // acceso a window.top por política de mismo origen; en ese caso, al menos
+    // ocultamos el contenido para no dejarlo usable dentro del iframe ajeno.
+    document.documentElement.style.display = 'none';
+  }
+
+  const STORE_KEY = 'finanzas-data';
+  const SETTINGS_KEY = 'finanzas-settings';
+  const TOKEN_KEY = 'finanzas-google-token';
+  const HARDCODED_CLIENT_ID = '612254024162-kejmqp9ecnnehmgpm9liib71bf7g3u2l.apps.googleusercontent.com';
+  const EMOJIS = ['💰','💳','🏦','💵','💶','💷','💴','🪙','📈','📉','💹','📊','🧾','🧮','💼','👛','📱','☕','🛒','🎯','🐷','✈️','🏠','🚗','🎓','🎁','⭐','🔒','📆','🍽️'];
+  const COLORS = ['#2dd4a7','#38bdf8','#f59e0b','#a78bfa','#fb7185','#94a3b8','#34d399','#fbbf24','#60a5fa','#f472b6'];
+
+  const CATEGORIAS_INGRESO = [
+    {v:'Sueldo', e:'💼'}, {v:'Freelance / Trabajo independiente', e:'💻'}, {v:'Negocio propio', e:'🏪'},
+    {v:'Arriendos recibidos', e:'🏠'}, {v:'Inversiones / Rendimientos', e:'📈'}, {v:'Regalo o ayuda familiar', e:'🎁'},
+    {v:'Devolución / Reembolso', e:'↩️'}, {v:'Venta de artículos', e:'🛒'}, {v:'Otro ingreso', e:'➕'}
+  ];
+  const CATEGORIAS_EGRESO = [
+    {v:'Vivienda', e:'🏠'}, {v:'Servicios públicos', e:'💡'}, {v:'Alimentación / Mercado', e:'🍽️'},
+    {v:'Transporte', e:'🚗'}, {v:'Educación', e:'🎓'}, {v:'Salud', e:'🏥'}, {v:'Entretenimiento', e:'🎬'},
+    {v:'Ropa y calzado', e:'👕'}, {v:'Cuidado personal', e:'💇'}, {v:'Suscripciones', e:'📱'},
+    {v:'Tecnología', e:'💻'}, {v:'Mascotas', e:'🐾'}, {v:'Viajes', e:'✈️'}, {v:'Regalos y donaciones', e:'🎁'},
+    {v:'Impuestos', e:'🧾'}, {v:'Otro gasto', e:'➕'}
+  ];
+  function poblarCategorias(selectId, tipo){
+    const sel = document.getElementById(selectId);
+    if(!sel) return;
+    const lista = tipo === 'Ingreso' ? CATEGORIAS_INGRESO : CATEGORIAS_EGRESO;
+    const actual = sel.value;
+    sel.innerHTML = '<option value="">Sin categoría</option>' +
+      lista.map(c=>`<option value="${c.v}">${c.e} ${c.v}</option>`).join('');
+    if(lista.some(c=>c.v===actual)) sel.value = actual;
+  }
+
+  let data = { cuentas: [], movimientos: [], tarjetas: [], movimientosTC: [], planesCuotas: [] };
+  let settings = { clientId: '', sheetId: '', ocultar: false, columnMap: {}, tcActivado: undefined };
+  let tipoSel = 'Ingreso';
+  let editingCuentaId = null;
+  let editingTarjetaId = null;
+  let tokenClient = null;
+  let selectedEmoji = '';
+  let selectedColor = '';
+  let pendingAutomaticos = [];
+  let autoTipoSel = 'Ingreso';
+  let tcTipoSel = 'Compra';
+
+  const fmt = n => '$ ' + Math.round(n).toLocaleString('es-CO');
+  const todayLabel = () => new Date().toLocaleDateString('es-CO', {day:'2-digit', month:'short'});
+  const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+
+  // ---------- Seguridad: escape de HTML y neutralización de fórmulas ----------
+  function escapeHtml(str){
+    if(str===null || str===undefined) return '';
+    return String(str)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+  // Evita inyección de fórmulas en Google Sheets: si un valor empieza por = + - @,
+  // Sheets podría interpretarlo como fórmula al usar valueInputOption=USER_ENTERED.
+  function sheetSafe(str){
+    const s = (str===null || str===undefined) ? '' : String(str);
+    return /^[=+\-@]/.test(s) ? ("'" + s) : s;
+  }
+
+  // ---------- Logging de eventos de seguridad ----------
+  // Registro local únicamente (consola del navegador del propio usuario).
+  // Nunca se envía a ningún servidor externo. Nunca incluye tokens, montos,
+  // descripciones ni ningún otro dato financiero o credencial — solo el
+  // tipo de evento, la hora, y un detalle mínimo no sensible.
+  function logSecurityEvent(evento, detalle){
+    try{
+      console.info('[Reckly][seguridad]', new Date().toISOString(), evento, detalle||'');
+    }catch(e){}
+  }
+
+  function loadAll(){
+    try{ const raw = localStorage.getItem(STORE_KEY); if(raw) data = JSON.parse(raw); }catch(e){}
+    try{ const raw = localStorage.getItem(SETTINGS_KEY); if(raw) settings = Object.assign(settings, JSON.parse(raw)); }catch(e){}
+    if(!settings.columnMap) settings.columnMap = {};
+    if(!data.tarjetas) data.tarjetas = [];
+    if(!data.movimientosTC) data.movimientosTC = [];
+    if(!data.planesCuotas) data.planesCuotas = [];
+    if(settings.tcActivado === undefined){
+      settings.tcActivado = data.tarjetas.length > 0;
+      saveSettingsLS();
+    }
+    let migrado = false;
+    data.tarjetas.forEach(t=>{
+      if(t.cupoInicial===undefined){
+        t.cupoInicial = (t.cupoActual!==undefined ? t.cupoActual : 0);
+        delete t.cupoActual;
+        migrado = true;
+      }
+    });
+    if(migrado) save();
+  }
+  function save(){ localStorage.setItem(STORE_KEY, JSON.stringify(data)); }
+  function saveSettingsLS(){ localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }
+
+  // ---------- Formato de moneda en inputs ----------
+  function attachCurrencyInput(el){
+    el.addEventListener('input', ()=>{
+      let digits = el.value.replace(/\D/g,'');
+      digits = digits.replace(/^0+(?=\d)/,'');
+      el.value = digits ? Number(digits).toLocaleString('es-CO') : '';
+    });
+  }
+  function currencyValue(el){
+    const digits = el.value.replace(/\D/g,'');
+    return digits ? parseInt(digits,10) : 0;
+  }
+  attachCurrencyInput(document.getElementById('inCuentaSaldo'));
+  attachCurrencyInput(document.getElementById('inMovMonto'));
+  attachCurrencyInput(document.getElementById('inAutoMonto'));
+  attachCurrencyInput(document.getElementById('inTarjetaCupo'));
+  attachCurrencyInput(document.getElementById('inMovTCMonto'));
+
+  // ---------- Cálculo de saldos ----------
+  function saldoCuenta(nombre){
+    const c = data.cuentas.find(c=>c.nombre===nombre);
+    if(!c) return 0;
+    let s = c.saldoBase;
+    data.movimientos.forEach(m=>{
+      if(m.cuenta!==nombre) return;
+      s += m.tipo==='Ingreso' ? m.monto : -m.monto;
+    });
+    return s;
+  }
+
+  function cupoDisponible(nombreTarjeta){
+    const t = data.tarjetas.find(t=>t.nombre===nombreTarjeta);
+    if(!t) return 0;
+    let s = t.cupoInicial;
+    data.movimientosTC.forEach(m=>{
+      if(m.tarjeta!==nombreTarjeta) return;
+      s += m.tipo==='Pago' ? m.monto : -m.monto;
+    });
+    return s;
+  }
+
+  // Cuota fija mensual (sistema francés): monto*i / (1-(1+i)^-cuotas)
+  function calcularCuotaFija(monto, cuotas, eaPercent){
+    if(!eaPercent || eaPercent<=0) return monto/cuotas;
+    const i = Math.pow(1 + eaPercent/100, 1/12) - 1;
+    return (monto * i) / (1 - Math.pow(1+i, -cuotas));
+  }
+
+  // ---------- Gráficas ----------
+  let chartDonut = null, chartLine = null;
+  let chartsStale = true;
+  let lineRangeDays = 365;
+  let currentPageIndex = 1;
+
+  function computeBalanceSeries(rangeDays){
+    const dateSet = new Set();
+    data.movimientos.forEach(m=> dateSet.add(m.fecha.slice(0,10)));
+    const hoy = new Date().toISOString().slice(0,10);
+    dateSet.add(hoy);
+    let dateList = Array.from(dateSet).sort();
+    if(rangeDays){
+      const cutoff = new Date(Date.now() - rangeDays*86400000).toISOString().slice(0,10);
+      dateList = dateList.filter(d=>d>=cutoff);
+      if(!dateList.length) dateList = [hoy];
+    }
+    const series = {};
+    data.cuentas.forEach(c=>{
+      series[c.nombre] = dateList.map(d=>{
+        let s = c.saldoBase;
+        data.movimientos.forEach(m=>{
+          if(m.cuenta!==c.nombre) return;
+          if(m.fecha.slice(0,10) <= d) s += (m.tipo==='Ingreso' ? m.monto : -m.monto);
+        });
+        return Math.round(s);
+      });
+    });
+    return { labels: dateList, series };
+  }
+
+  function renderDonutChart(){
+    if(typeof Chart === 'undefined'){
+      document.getElementById('donutChart').style.display = 'none';
+      const eb = document.getElementById('donutEmpty');
+      eb.style.display = 'block';
+      eb.textContent = 'No se pudo cargar el motor de gráficas (revisa tu conexión y refresca).';
+      return;
+    }
+    const incluidas = data.cuentas.filter(c=>c.incluirTotal);
+    const valores = incluidas.map(c=>Math.max(0, saldoCuenta(c.nombre)));
+    const colores = incluidas.map((c,i)=> c.color || COLORS[i % COLORS.length]);
+    const total = valores.reduce((a,b)=>a+b,0);
+    const canvas = document.getElementById('donutChart');
+    const emptyBox = document.getElementById('donutEmpty');
+    if(chartDonut){ chartDonut.destroy(); chartDonut = null; }
+
+    if(!incluidas.length || total<=0){
+      canvas.style.display = 'none';
+      emptyBox.style.display = 'block';
+      document.getElementById('donutLegend').innerHTML = '';
+      return;
+    }
+    canvas.style.display = 'block';
+    emptyBox.style.display = 'none';
+    chartDonut = new Chart(canvas, {
+      type: 'doughnut',
+      data: { labels: incluidas.map(c=>c.nombre), datasets: [{ data: valores, backgroundColor: colores, borderWidth: 2, borderColor: '#ffffff' }] },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: '62%',
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: (ctx)=> ctx.label + ': ' + fmt(ctx.parsed) + ' (' + Math.round(ctx.parsed/total*100) + '%)' } }
+        }
+      }
+    });
+    document.getElementById('donutLegend').innerHTML = incluidas.map((c,i)=>{
+      const val = valores[i];
+      const pct = total>0 ? Math.round(val/total*100) : 0;
+      return `<div class="legend-row"><span class="legend-dot" style="background:${colores[i]}"></span><span class="legend-name">${c.emoji?c.emoji+' ':''}${escapeHtml(c.nombre)}</span><span class="legend-val num">${fmt(val)} · ${pct}%</span></div>`;
+    }).join('');
+  }
+
+  function renderLineChart(){
+    if(typeof Chart === 'undefined'){
+      document.getElementById('lineChart').style.display = 'none';
+      const eb = document.getElementById('lineEmpty');
+      eb.style.display = 'block';
+      eb.textContent = 'No se pudo cargar el motor de gráficas (revisa tu conexión y refresca).';
+      return;
+    }
+    const canvas = document.getElementById('lineChart');
+    const emptyBox = document.getElementById('lineEmpty');
+    if(chartLine){ chartLine.destroy(); chartLine = null; }
+
+    if(!data.cuentas.length){
+      canvas.style.display = 'none';
+      emptyBox.style.display = 'block';
+      return;
+    }
+    canvas.style.display = 'block';
+    emptyBox.style.display = 'none';
+    const { labels, series } = computeBalanceSeries(lineRangeDays || null);
+    const displayLabels = labels.map(d => new Date(d+'T00:00:00').toLocaleDateString('es-CO', {day:'2-digit', month:'short'}));
+    const datasets = data.cuentas.map((c,i)=>({
+      label: c.nombre,
+      data: series[c.nombre],
+      borderColor: c.color || COLORS[i % COLORS.length],
+      backgroundColor: 'transparent',
+      tension: 0.2, pointRadius: 2, pointHoverRadius: 4, borderWidth: 2
+    }));
+    chartLine = new Chart(canvas, {
+      type: 'line',
+      data: { labels: displayLabels, datasets },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { display: true, position: 'bottom', labels: { boxWidth: 10, font: {size:10.5}, color: '#3c4a63' } },
+          tooltip: { callbacks: { label: (ctx)=> ctx.dataset.label + ': ' + fmt(ctx.parsed.y) } }
+        },
+        scales: {
+          y: { ticks: { font:{size:10}, callback: (v)=> '$'+(Math.abs(v)>=1000000 ? Math.round(v/1000000)+'M' : Math.abs(v)>=1000 ? Math.round(v/1000)+'k' : v) }, grid: { color:'#e4e8f0' } },
+          x: { ticks: { font:{size:10}, maxRotation:0, autoSkip:true, maxTicksLimit:6 }, grid: { display:false } }
+        }
+      }
+    });
+  }
+
+  function renderGraficas(){
+    chartsStale = false;
+    renderDonutChart();
+    renderLineChart();
+  }
+
+  document.querySelectorAll('.range-tab').forEach(btn=>{
+    btn.onclick = ()=>{
+      document.querySelectorAll('.range-tab').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      lineRangeDays = parseInt(btn.dataset.range, 10) || 0;
+      renderLineChart();
+    };
+  });
+
+  // ---------- Gráficas de tarjetas de crédito ----------
+  let chartDonutTC = null, chartLineTC = null;
+  let chartsTCStale = true;
+  let tcLineRangeDays = 365;
+  let tcGraficaSeleccionada = null;
+
+  // Cupo utilizado = cupoInicial - cupoDisponible; por construcción, utilizado + disponible = cupoInicial (el "cupo total").
+  function cupoUtilizadoTarjeta(nombre){
+    const t = data.tarjetas.find(t=>t.nombre===nombre);
+    if(!t) return 0;
+    return Math.max(0, t.cupoInicial - cupoDisponible(nombre));
+  }
+
+  function computeCupoUtilizadoSeries(nombreTarjeta, rangeDays){
+    const dateSet = new Set();
+    data.movimientosTC.forEach(m=>{ if(m.tarjeta===nombreTarjeta) dateSet.add(m.fecha.slice(0,10)); });
+    const hoy = new Date().toISOString().slice(0,10);
+    dateSet.add(hoy);
+    let dateList = Array.from(dateSet).sort();
+    if(rangeDays){
+      const cutoff = new Date(Date.now() - rangeDays*86400000).toISOString().slice(0,10);
+      dateList = dateList.filter(d=>d>=cutoff);
+      if(!dateList.length) dateList = [hoy];
+    }
+    const serie = dateList.map(d=>{
+      let s = 0;
+      data.movimientosTC.forEach(m=>{
+        if(m.tarjeta!==nombreTarjeta) return;
+        if(m.fecha.slice(0,10) <= d) s += (m.tipo==='Compra' ? m.monto : -m.monto);
+      });
+      return Math.round(Math.max(0, s));
+    });
+    return { labels: dateList, data: serie };
+  }
+
+  function poblarSelectorGraficaTC(){
+    const sel = document.getElementById('graficaTCSelect');
+    if(!data.tarjetas.some(t=>t.nombre===tcGraficaSeleccionada)){
+      tcGraficaSeleccionada = data.tarjetas.length ? data.tarjetas[0].nombre : null;
+    }
+    sel.innerHTML = data.tarjetas.map(t=>`<option value="${escapeHtml(t.nombre)}" ${t.nombre===tcGraficaSeleccionada?'selected':''}>${t.emoji?t.emoji+' ':''}${escapeHtml(t.nombre)}</option>`).join('');
+  }
+
+  function renderDonutChartTC(){
+    if(typeof Chart === 'undefined'){
+      document.getElementById('donutChartTC').style.display = 'none';
+      const eb = document.getElementById('donutTCEmpty');
+      eb.style.display = 'block';
+      eb.textContent = 'No se pudo cargar el motor de gráficas (revisa tu conexión y refresca).';
+      return;
+    }
+    const canvas = document.getElementById('donutChartTC');
+    const emptyBox = document.getElementById('donutTCEmpty');
+    if(chartDonutTC){ chartDonutTC.destroy(); chartDonutTC = null; }
+    const t = data.tarjetas.find(t=>t.nombre===tcGraficaSeleccionada);
+    if(!t){
+      canvas.style.display = 'none'; emptyBox.style.display = 'block';
+      document.getElementById('donutTCLegend').innerHTML = '';
+      return;
+    }
+    canvas.style.display = 'block'; emptyBox.style.display = 'none';
+    const utilizado = cupoUtilizadoTarjeta(t.nombre);
+    const disponible = Math.max(0, cupoDisponible(t.nombre));
+    const total = utilizado + disponible;
+    const pct = total>0 ? Math.round(utilizado/total*100) : 0;
+    chartDonutTC = new Chart(canvas, {
+      type: 'doughnut',
+      data: { labels: ['Cupo utilizado','Cupo disponible'], datasets: [{ data: [utilizado, disponible], backgroundColor: ['#c1443c','#159a80'], borderWidth: 2, borderColor:'#ffffff' }] },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: '62%',
+        plugins: {
+          legend: { display:false },
+          tooltip: { callbacks: { label:(ctx)=> ctx.label+': '+fmt(ctx.parsed) } }
+        }
+      }
+    });
+    document.getElementById('donutTCLegend').innerHTML = `
+      <div class="legend-row"><span class="legend-dot" style="background:#c1443c"></span><span class="legend-name">Cupo utilizado</span><span class="legend-val num">${fmt(utilizado)} · ${pct}%</span></div>
+      <div class="legend-row"><span class="legend-dot" style="background:#159a80"></span><span class="legend-name">Cupo disponible</span><span class="legend-val num">${fmt(disponible)} · ${100-pct}%</span></div>
+      <div class="legend-row"><span class="legend-dot" style="background:var(--ink)"></span><span class="legend-name">Cupo total</span><span class="legend-val num">${fmt(total)}</span></div>
+    `;
+  }
+
+  function renderLineChartTC(){
+    if(typeof Chart === 'undefined'){
+      document.getElementById('lineChartTC').style.display = 'none';
+      const eb = document.getElementById('lineTCEmpty');
+      eb.style.display = 'block';
+      eb.textContent = 'No se pudo cargar el motor de gráficas (revisa tu conexión y refresca).';
+      return;
+    }
+    const canvas = document.getElementById('lineChartTC');
+    const emptyBox = document.getElementById('lineTCEmpty');
+    if(chartLineTC){ chartLineTC.destroy(); chartLineTC = null; }
+    const t = data.tarjetas.find(t=>t.nombre===tcGraficaSeleccionada);
+    if(!t){
+      canvas.style.display = 'none'; emptyBox.style.display = 'block';
+      return;
+    }
+    canvas.style.display = 'block'; emptyBox.style.display = 'none';
+    const { labels, data: serie } = computeCupoUtilizadoSeries(t.nombre, tcLineRangeDays || null);
+    const displayLabels = labels.map(d => new Date(d+'T00:00:00').toLocaleDateString('es-CO', {day:'2-digit', month:'short'}));
+    chartLineTC = new Chart(canvas, {
+      type: 'line',
+      data: { labels: displayLabels, datasets: [{
+        label: 'Cupo utilizado', data: serie,
+        borderColor: '#c1443c', backgroundColor: 'rgba(193,68,60,.08)', fill: true,
+        tension: 0.2, pointRadius: 2, pointHoverRadius: 4, borderWidth: 2
+      }] },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        interaction: { mode:'index', intersect:false },
+        plugins: {
+          legend: { display:false },
+          tooltip: { callbacks: { label:(ctx)=> 'Cupo utilizado: '+fmt(ctx.parsed.y) } }
+        },
+        scales: {
+          y: { ticks: { font:{size:10}, callback:(v)=> '$'+(Math.abs(v)>=1000000?Math.round(v/1000000)+'M':Math.abs(v)>=1000?Math.round(v/1000)+'k':v) }, grid:{color:'#e4e8f0'} },
+          x: { ticks: { font:{size:10}, maxRotation:0, autoSkip:true, maxTicksLimit:6 }, grid:{display:false} }
+        }
+      }
+    });
+  }
+
+  function renderGraficasTC(){
+    chartsTCStale = false;
+    poblarSelectorGraficaTC();
+    renderDonutChartTC();
+    renderLineChartTC();
+  }
+
+  document.getElementById('graficaTCSelect').addEventListener('change', (e)=>{
+    tcGraficaSeleccionada = e.target.value;
+    renderDonutChartTC();
+    renderLineChartTC();
+  });
+
+  document.querySelectorAll('.range-tab-tc').forEach(btn=>{
+    btn.onclick = ()=>{
+      document.querySelectorAll('.range-tab-tc').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      tcLineRangeDays = parseInt(btn.dataset.rangetc, 10) || 0;
+      renderLineChartTC();
+    };
+  });
+
+  function accrueInterest(){
+    const now = Date.now();
+    let changed = false;
+    data.cuentas.forEach(c=>{
+      if(!c.lastAccrual){ c.lastAccrual = new Date(now).toISOString(); changed = true; return; }
+      if(!c.rendimiento) return;
+      const last = new Date(c.lastAccrual).getTime();
+      const days = Math.floor((now-last)/86400000);
+      if(days>=1){
+        const dailyRate = Math.pow(1 + c.rendimiento.ea/100, 1/365) - 1;
+        for(let i=0;i<days;i++){
+          const actual = saldoCuenta(c.nombre);
+          c.saldoBase += actual*dailyRate;
+        }
+        c.lastAccrual = new Date(last + days*86400000).toISOString();
+        changed = true;
+      }
+    });
+    if(changed) save();
+  }
+
+  // ---------- Movimientos automáticos programados ----------
+  function addInterval(d, frecuencia){
+    const nd = new Date(d);
+    switch(frecuencia){
+      case 'diaria': nd.setDate(nd.getDate()+1); break;
+      case 'semanal': nd.setDate(nd.getDate()+7); break;
+      case 'quincenal': nd.setDate(nd.getDate()+15); break;
+      case 'mensual': {
+        const day = nd.getDate();
+        nd.setDate(1);
+        nd.setMonth(nd.getMonth()+1);
+        const lastDay = new Date(nd.getFullYear(), nd.getMonth()+1, 0).getDate();
+        nd.setDate(Math.min(day, lastDay));
+        break;
+      }
+      case 'anual': nd.setFullYear(nd.getFullYear()+1); break;
+    }
+    return nd;
+  }
+
+  function processAutomaticos(){
+    const now = Date.now();
+    let changed = false;
+    let huboOmitidos = false;
+    const nuevos = [];
+    data.cuentas.forEach(c=>{
+      let saldoProyectado = saldoCuenta(c.nombre);
+      (c.automaticos||[]).forEach(rule=>{
+        if(!rule.activo) return;
+        let proxima = new Date(rule.proxima || rule.inicio).getTime();
+        let guard = 0;
+        while(proxima <= now && guard < 300){
+          if(rule.tipo === 'Egreso' && (saldoProyectado - rule.monto) < 0){
+            huboOmitidos = true;
+            break; // sin saldo suficiente: queda pendiente, se reintenta en el próximo refresco
+          }
+          nuevos.push({
+            id: uid(), tipo: rule.tipo, cuenta: c.nombre, monto: rule.monto,
+            descripcion: rule.descripcion || ('Automático · '+rule.tipo), categoria: rule.categoria || '',
+            fecha: new Date(proxima).toISOString(),
+            fechaLabel: new Date(proxima).toLocaleDateString('es-CO', {day:'2-digit', month:'short'})
+          });
+          saldoProyectado += (rule.tipo === 'Ingreso' ? rule.monto : -rule.monto);
+          changed = true;
+          guard++;
+          if(rule.frecuencia === 'una_vez'){ rule.activo = false; break; }
+          proxima = addInterval(new Date(proxima), rule.frecuencia).getTime();
+        }
+        rule.proxima = new Date(proxima).toISOString();
+      });
+    });
+    if(changed){
+      nuevos.forEach(m=> data.movimientos.push(m));
+      save();
+      nuevos.forEach(m=> queueSync(()=> syncMovimientoBackground(m)));
+    } else if(huboOmitidos){
+      save();
+    }
+    if(huboOmitidos) showToast('Un movimiento automático no se hizo por falta de saldo, queda pendiente');
+    return changed;
+  }
+
+  function processPlanesCuotas(){
+    const now = Date.now();
+    let changed = false;
+    let huboOmitidos = false;
+    const saldoProyectado = {};
+    const nuevasTC = [];
+    const nuevasCuenta = [];
+    data.planesCuotas.forEach(plan=>{
+      if(!plan.activo) return;
+      if(!data.cuentas.some(c=>c.nombre===plan.cuenta)) return; // cuenta origen ya no existe
+      if(saldoProyectado[plan.cuenta] === undefined) saldoProyectado[plan.cuenta] = saldoCuenta(plan.cuenta);
+      let proxima = new Date(plan.proxima).getTime();
+      let guard = 0;
+      while(proxima <= now && plan.cuotasPagadas < plan.cuotasTotal && guard < 300){
+        if((saldoProyectado[plan.cuenta] - plan.montoCuota) < 0){
+          huboOmitidos = true;
+          break; // sin saldo suficiente en la cuenta: la cuota queda pendiente, se reintenta después
+        }
+        const numCuota = plan.cuotasPagadas + 1;
+        const linkId = uid();
+        const fechaISO = new Date(proxima).toISOString();
+        const fechaLabel = new Date(proxima).toLocaleDateString('es-CO', {day:'2-digit', month:'short'});
+        const descBase = plan.descripcion ? plan.descripcion+' · ' : '';
+        nuevasTC.push({
+          id: uid(), tipo:'Pago', tarjeta: plan.tarjeta, monto: plan.montoCuota,
+          descripcion: descBase+'cuota '+numCuota+'/'+plan.cuotasTotal, cuentaRelacionada: plan.cuenta,
+          groupId: linkId, fecha: fechaISO, fechaLabel
+        });
+        nuevasCuenta.push({
+          id: uid(), tipo:'Egreso', cuenta: plan.cuenta, monto: plan.montoCuota,
+          descripcion: 'Cuota '+numCuota+'/'+plan.cuotasTotal+' tarjeta '+plan.tarjeta,
+          groupId: linkId, fecha: fechaISO, fechaLabel
+        });
+        saldoProyectado[plan.cuenta] -= plan.montoCuota;
+        plan.cuotasPagadas = numCuota;
+        changed = true;
+        guard++;
+        if(plan.cuotasPagadas >= plan.cuotasTotal){ plan.activo = false; break; }
+        proxima = addInterval(new Date(proxima), 'mensual').getTime();
+      }
+      plan.proxima = new Date(proxima).toISOString();
+    });
+    if(huboOmitidos) showToast('Una cuota de tarjeta no se pagó por falta de saldo, queda pendiente');
+    if(changed){
+      nuevasTC.forEach(m=> data.movimientosTC.push(m));
+      nuevasCuenta.forEach(m=> data.movimientos.push(m));
+      save();
+      nuevasCuenta.forEach(m=> queueSync(()=> syncMovimientoBackground(m)));
+      nuevasTC.forEach(m=> queueSync(()=> syncMovimientoBackground({
+        tipo: m.tipo, cuenta: 'TC: '+m.tarjeta, monto: m.monto,
+        descripcion: m.descripcion + ' · Cuenta origen: ' + m.cuentaRelacionada,
+        fecha: m.fecha
+      })));
+    }
+    return changed;
+  }
+
+  // ---------- Render ----------
+  function renderTarjetas(){
+    const totalTC = data.tarjetas.filter(t=>t.incluirTotal).reduce((a,t)=>a+cupoDisponible(t.nombre),0);
+    document.getElementById('totalTC').textContent = settings.ocultar ? '•••••••' : fmt(totalTC);
+    document.getElementById('tarjetasCount').textContent =
+      data.tarjetas.length ? data.tarjetas.length + ' tarjeta' + (data.tarjetas.length>1?'s':'') + ' · ' + data.tarjetas.filter(t=>t.incluirTotal).length + ' en el total' : 'Sin tarjetas todavía';
+    document.getElementById('btnEyeTC').textContent = settings.ocultar ? '🙈' : '👁️';
+
+    const grid = document.getElementById('tarjetasGrid');
+    grid.innerHTML = '';
+    data.tarjetas.forEach(t=>{
+      const oculto = settings.ocultar || t.oculto;
+      const color = t.color || '';
+      const cupo = cupoDisponible(t.nombre);
+      const el = document.createElement('div');
+      el.className = 'cuenta-card' + (t.incluirTotal ? '' : ' excluded');
+      if(color){
+        el.style.background = color + '17';
+        el.style.borderColor = color + '55';
+      }
+      el.innerHTML = `
+        <div class="crow">
+          <div class="cuenta-badge" style="background:${color?color+'30':'var(--paper)'};">${t.emoji || '💳'}</div>
+          <button class="cuenta-eye" data-id="${t.id}">${oculto?'🙈':'👁️'}</button>
+        </div>
+        <div class="nombre">${escapeHtml(t.nombre)}</div>
+        <div class="saldo num" style="color:${cupo<0?'var(--down)':'var(--ink)'}">${oculto?'••••':fmt(cupo)}</div>
+      `;
+      el.onclick = ()=>openEditTarjeta(t.id);
+      el.querySelector('.cuenta-eye').onclick = (ev)=>{
+        ev.stopPropagation();
+        const tt = data.tarjetas.find(x=>x.id===t.id);
+        tt.oculto = !tt.oculto;
+        save(); render();
+      };
+      grid.appendChild(el);
+    });
+    const addCard = document.createElement('div');
+    addCard.className = 'cuenta-card add';
+    addCard.textContent = '＋';
+    addCard.onclick = ()=>openNewTarjeta();
+    grid.appendChild(addCard);
+
+    const movSelectTC = document.getElementById('inMovTCTarjeta');
+    if(movSelectTC) movSelectTC.innerHTML = data.tarjetas.map(t=>`<option value="${escapeHtml(t.nombre)}">${t.emoji?t.emoji+' ':''}${escapeHtml(t.nombre)}</option>`).join('');
+    const cuentaSelectsTC = [document.getElementById('inMovTCCuentaPago'), document.getElementById('inCompraCuenta')];
+    cuentaSelectsTC.forEach(sel=>{ if(sel) sel.innerHTML = data.cuentas.map(c=>`<option value="${escapeHtml(c.nombre)}">${c.emoji?c.emoji+' ':''}${escapeHtml(c.nombre)}</option>`).join(''); });
+
+    const listTC = document.getElementById('movListTC');
+    if(listTC){
+      const recientesTC = [...data.movimientosTC].reverse().slice(0,30);
+      if(!recientesTC.length){
+        listTC.innerHTML = '<div class="empty">Todavía no has registrado movimientos de tarjetas.<br>Toca "Registrar movimiento" para empezar.</div>';
+      } else {
+        listTC.innerHTML = recientesTC.map(m=>{
+          const cls = m.tipo==='Pago' ? 'in':'out';
+          const sign = m.tipo==='Pago' ? '+':'−';
+          return `<div class="mov-item">
+            <div class="mov-icon ${cls}">${m.tipo==='Pago'?'↑':'↓'}</div>
+            <div class="mov-mid">
+              <div class="mov-desc">${escapeHtml(m.descripcion) || m.tipo}</div>
+              <div class="mov-meta">${escapeHtml(m.tarjeta)} · ${m.fechaLabel}</div>
+            </div>
+            <div class="mov-amt ${cls} num">${settings.ocultar?'••••':(sign+' '+Math.round(m.monto).toLocaleString('es-CO'))}</div>
+          </div>`;
+        }).join('');
+      }
+    }
+  }
+
+  function render(){
+    const total = data.cuentas.filter(c=>c.incluirTotal).reduce((a,c)=>a+saldoCuenta(c.nombre),0);
+    document.getElementById('totalSaldo').textContent = settings.ocultar ? '•••••••' : fmt(total);
+    document.getElementById('cuentasCount').textContent =
+      data.cuentas.length ? data.cuentas.length + ' cuenta' + (data.cuentas.length>1?'s':'') + ' · ' + data.cuentas.filter(c=>c.incluirTotal).length + ' en el total' : 'Sin cuentas todavía';
+    document.getElementById('btnEye').textContent = settings.ocultar ? '🙈' : '👁️';
+
+    const grid = document.getElementById('cuentasGrid');
+    grid.innerHTML = '';
+    data.cuentas.forEach(c=>{
+      const s = saldoCuenta(c.nombre);
+      const oculto = settings.ocultar || c.oculto;
+      const color = c.color || '';
+      const el = document.createElement('div');
+      el.className = 'cuenta-card' + (c.incluirTotal ? '' : ' excluded');
+      if(color){
+        el.style.background = color + '17';
+        el.style.borderColor = color + '55';
+      }
+      el.innerHTML = `
+        <div class="crow">
+          <div class="cuenta-badge" style="background:${color?color+'30':'var(--paper)'};">${c.emoji || '💼'}</div>
+          <button class="cuenta-eye" data-id="${c.id}">${oculto?'🙈':'👁️'}</button>
+        </div>
+        <div class="nombre">${escapeHtml(c.nombre)}</div>
+        <div class="saldo num" style="color:${s<0?'var(--down)':'var(--ink)'}">${oculto?'••••':fmt(s)}</div>
+        ${c.rendimiento?'<span class="badge">'+c.rendimiento.ea+'% EA</span>':''}
+      `;
+      el.onclick = ()=>openEditCuenta(c.id);
+      el.querySelector('.cuenta-eye').onclick = (ev)=>{
+        ev.stopPropagation();
+        const cc = data.cuentas.find(x=>x.id===c.id);
+        cc.oculto = !cc.oculto;
+        save(); render();
+      };
+      grid.appendChild(el);
+    });
+    const addCard = document.createElement('div');
+    addCard.className = 'cuenta-card add';
+    addCard.textContent = '＋';
+    addCard.onclick = ()=>openNewCuenta();
+    grid.appendChild(addCard);
+
+    const movSelect = document.getElementById('inMovCuenta');
+    movSelect.innerHTML = data.cuentas.map(c=>`<option value="${escapeHtml(c.nombre)}">${c.emoji?c.emoji+' ':''}${escapeHtml(c.nombre)}</option>`).join('');
+
+    const list = document.getElementById('movList');
+    const recientes = [...data.movimientos].reverse().slice(0,30);
+    if(!recientes.length){
+      list.innerHTML = '<div class="empty">Todavía no has registrado movimientos.<br>Toca "Registrar movimiento" para empezar.</div>';
+    } else {
+      list.innerHTML = recientes.map(m=>{
+        const cls = m.tipo==='Ingreso' ? 'in':'out';
+        const sign = m.tipo==='Ingreso' ? '+':'−';
+        return `<div class="mov-item">
+          <div class="mov-icon ${cls}">${m.tipo==='Ingreso'?'↑':'↓'}</div>
+          <div class="mov-mid">
+            <div class="mov-desc">${escapeHtml(m.descripcion) || m.tipo}</div>
+            <div class="mov-meta">${escapeHtml(m.cuenta)} · ${m.fechaLabel}${m.categoria?' · '+escapeHtml(m.categoria):''}</div>
+          </div>
+          <div class="mov-amt ${cls} num">${settings.ocultar?'••••':(sign+' '+Math.round(m.monto).toLocaleString('es-CO'))}</div>
+        </div>`;
+      }).join('');
+    }
+
+    renderTarjetas();
+
+    chartsStale = true;
+    if(currentPageIndex === 0) renderGraficas();
+    chartsTCStale = true;
+    if(currentPageIndex === 3) renderGraficasTC();
+
+    document.getElementById('banner').style.display = settings.sheetId ? 'none' : 'flex';
+    document.getElementById('btnSheetLink').style.display = settings.sheetId ? 'flex' : 'none';
+    const statusLine = document.getElementById('statusLine');
+    const dot = document.getElementById('statusDot');
+    const text = document.getElementById('statusText');
+    if(settings.sheetId){
+      statusLine.style.display = 'flex';
+      if(lastError){
+        statusLine.classList.add('err');
+        dot.classList.remove('on');
+        text.textContent = 'No se pudo sincronizar el último cambio · toca para ver por qué';
+        statusLine.onclick = ()=>showError(lastError, 'No se pudo sincronizar');
+      } else {
+        statusLine.classList.remove('err');
+        dot.classList.add('on');
+        text.textContent = 'Sincronizado con Google Sheets';
+        statusLine.onclick = null;
+      }
+    } else {
+      statusLine.style.display = 'none';
+    }
+  }
+
+  function toggleOverlay(id, show){ document.getElementById(id).classList.toggle('show', show); }
+  function showToast(msg){
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    const dur = msg.length > 40 ? 5000 : 2200;
+    setTimeout(()=>t.classList.remove('show'), dur);
+  }
+
+  // ---------- Errores claros ----------
+  let lastError = null;
+  function friendlyError(raw){
+    const s = (raw||'').toLowerCase();
+    if(s.includes('no-client-id')) return 'Falta pegar tu Client ID de Google en Ajustes ⚙️ antes de conectar.';
+    if(s.includes('access_denied') || s.includes('403') || s.includes('has not completed') || s.includes('verification')) return 'Tu cuenta de Google no está autorizada todavía para usar esta app. Ve a Google Cloud Console > APIs & Services > OAuth consent screen > sección "Test users", y agrega ahí tu correo de Gmail exacto.';
+    if(s.includes('has not been used') || (s.includes('disabled') && s.includes('api'))) return 'La Google Sheets API no está habilitada (o Google todavía no terminó de activarla, puede tardar 2-3 minutos). Ve a APIs & Services > Library > busca "Google Sheets API" > Enable, espera un momento y vuelve a intentar.';
+    if(s.includes('popup') || s.includes('closed') || s.includes('cancel')) return 'Parece que cerraste la ventana de inicio de sesión de Google antes de terminar. Toca Conectar de nuevo y completa todo el proceso hasta el final (incluyendo el botón Continuar/Permitir).';
+    if(s.includes('redirect_uri') || s.includes('origin') || s.includes('idpiframe') || s.includes('unregistered')) return 'El origen de esta página no está autorizado en tu Client ID de Google. Revisa en Google Cloud > Credentials que "Orígenes autorizados de JavaScript" tenga exactamente tu dominio de github.io, sin barra ni ruta al final.';
+    if(s.includes('invalid_client') || s.includes('client')) return 'El Client ID pegado en Ajustes no parece válido. Revisa que lo copiaste completo, sin espacios, terminando en .apps.googleusercontent.com.';
+    if(s.includes('failed to fetch') || s.includes('networkerror') || s.includes('load failed')) return 'No se pudo conectar a internet en este momento para hablar con Google. Revisa tu conexión e intenta de nuevo.';
+    return 'Google devolvió un error que no reconozco automáticamente. Copia el detalle técnico de abajo y compártemelo para revisarlo juntos.';
+  }
+  function showError(raw, title){
+    lastError = raw;
+    document.getElementById('errorTitle').textContent = title || 'No se pudo conectar';
+    document.getElementById('errorFriendly').textContent = friendlyError(raw);
+    document.getElementById('errorTech').textContent = (raw && raw.toString) ? raw.toString() : JSON.stringify(raw);
+    toggleOverlay('errorOverlay', true);
+  }
+  document.getElementById('errorClose').onclick = ()=>toggleOverlay('errorOverlay', false);
+  document.getElementById('errorCopy').onclick = async ()=>{
+    try{
+      await navigator.clipboard.writeText(document.getElementById('errorTech').textContent);
+      showToast('Detalle copiado');
+    }catch(e){ showToast('No se pudo copiar, selecciona el texto manualmente'); }
+  };
+
+  // ---------- Ojo global ----------
+  document.getElementById('btnEye').onclick = ()=>{
+    settings.ocultar = !settings.ocultar;
+    saveSettingsLS(); render();
+  };
+  document.getElementById('btnEyeTC').onclick = ()=>{
+    settings.ocultar = !settings.ocultar;
+    saveSettingsLS(); render();
+  };
+
+  // ---------- Qué cuentas suman al total ----------
+  function renderTotalConfigList(){
+    const box = document.getElementById('totalConfigList');
+    if(!data.cuentas.length){
+      box.innerHTML = '<div class="empty">Todavía no tienes cuentas creadas.</div>';
+      return;
+    }
+    box.innerHTML = '';
+    data.cuentas.forEach(c=>{
+      const row = document.createElement('div');
+      row.className = 'swrow';
+      row.innerHTML = `<span class="swlabel">${c.emoji?c.emoji+' ':''}${escapeHtml(c.nombre)}</span>
+        <div class="swtoggle ${c.incluirTotal?'on':''}" data-id="${c.id}"><div class="knob"></div></div>`;
+      row.querySelector('.swtoggle').onclick = ()=>{
+        c.incluirTotal = !c.incluirTotal;
+        save(); render(); renderTotalConfigList();
+        syncSaldosBackground();
+      };
+      box.appendChild(row);
+    });
+  }
+  document.getElementById('tickerInfo').onclick = ()=>{
+    renderTotalConfigList();
+    toggleOverlay('overlayTotalConfig', true);
+  };
+  document.getElementById('closeTotalConfig').onclick = ()=>toggleOverlay('overlayTotalConfig', false);
+
+  // ---------- Qué tarjetas suman al total ----------
+  function renderTotalTCConfigList(){
+    const box = document.getElementById('totalTCConfigList');
+    if(!data.tarjetas.length){
+      box.innerHTML = '<div class="empty">Todavía no tienes tarjetas creadas.</div>';
+      return;
+    }
+    box.innerHTML = '';
+    data.tarjetas.forEach(t=>{
+      const row = document.createElement('div');
+      row.className = 'swrow';
+      row.innerHTML = `<span class="swlabel">${t.emoji?t.emoji+' ':''}${escapeHtml(t.nombre)}</span>
+        <div class="swtoggle ${t.incluirTotal?'on':''}" data-id="${t.id}"><div class="knob"></div></div>`;
+      row.querySelector('.swtoggle').onclick = ()=>{
+        t.incluirTotal = !t.incluirTotal;
+        save(); render(); renderTotalTCConfigList();
+      };
+      box.appendChild(row);
+    });
+  }
+  document.getElementById('tickerInfoTC').onclick = ()=>{
+    renderTotalTCConfigList();
+    toggleOverlay('overlayTotalTCConfig', true);
+  };
+  document.getElementById('closeTotalTCConfig').onclick = ()=>toggleOverlay('overlayTotalTCConfig', false);
+
+
+  // ---------- Ajustes ----------
+  document.getElementById('btnSettings').onclick = ()=>{
+    const list = document.getElementById('shortcutAccountsList');
+    list.innerHTML = data.cuentas.length
+      ? data.cuentas.map(c=>`• ${escapeHtml(c.nombre)}`).join('<br>')
+      : 'Todavía no tienes cuentas creadas.';
+    toggleOverlay('overlaySettings', true);
+  };
+  document.getElementById('btnCopyAccounts').onclick = async ()=>{
+    if(!data.cuentas.length){ showToast('Todavía no tienes cuentas creadas'); return; }
+    const texto = data.cuentas.map(c=>c.nombre).join(', ');
+    try{ await navigator.clipboard.writeText(texto); showToast('Lista de cuentas copiada'); }
+    catch(e){ showToast('No se pudo copiar, selecciona el texto manualmente'); }
+  };
+  document.getElementById('shareShortcutHelp').onclick = async ()=>{
+    const baseUrl = window.location.origin + window.location.pathname;
+    const cuentasTxt = data.cuentas.length ? data.cuentas.map(c=>c.nombre).join(', ') : '(agrega cuentas primero)';
+    const texto = `Guía para el Atajo de Reckly\n\n1) Preguntar por entrada (Lista): Ingreso / Egreso\n2) Preguntar por entrada (Lista), cuentas exactas: ${cuentasTxt}\n3) Preguntar por entrada (Número): Monto\n4) Preguntar por entrada (Texto, opcional): Descripción\n5) Acción URL, arma:\n${baseUrl}?quickadd=1&tipo=[P1]&cuenta=[P2]&monto=[P3]&desc=[P4]\n6) Acción "Abrir URLs" con esa URL.\n7) Ancla el atajo al Centro de Control o pantalla de inicio.`;
+    if(navigator.share){
+      try{ await navigator.share({title:'Guía Atajo Reckly', text: texto}); }
+      catch(e){}
+    } else {
+      try{ await navigator.clipboard.writeText(texto); showToast('Guía copiada (compartir no disponible aquí)'); }
+      catch(e){ showToast('No se pudo compartir ni copiar'); }
+    }
+  };
+  document.getElementById('cancelSettings').onclick = ()=>toggleOverlay('overlaySettings', false);
+  document.getElementById('btnDisconnectGoogle').onclick = ()=>{
+    if(!localStorage.getItem(TOKEN_KEY)){
+      showToast('No hay ninguna sesión activa con Google en este dispositivo');
+      return;
+    }
+    const cached = JSON.parse(localStorage.getItem(TOKEN_KEY) || 'null');
+    const finalizar = ()=>{
+      localStorage.removeItem(TOKEN_KEY);
+      tokenClient = null;
+      render();
+      toggleOverlay('overlaySettings', false);
+      logSecurityEvent('logout', 'Acceso a Google Drive revocado por el usuario');
+      showToast('Acceso revocado. Tu hoja de Sheets y tus datos locales siguen intactos.');
+    };
+    if(cached && cached.access_token && typeof google !== 'undefined' && google.accounts && google.accounts.oauth2){
+      try{ google.accounts.oauth2.revoke(cached.access_token, finalizar); }
+      catch(e){ finalizar(); }
+    } else {
+      finalizar();
+    }
+  };
+  document.getElementById('btnSheetLink').onclick = ()=>{
+    if(settings.sheetId) window.open('https://docs.google.com/spreadsheets/d/'+settings.sheetId+'/edit', '_blank');
+  };
+
+  // ---------- Refrescar / TC toggle en el header ----------
+  document.getElementById('btnRefresh').onclick = ()=>{
+    accrueInterest();
+    const a = processAutomaticos();
+    const b = processPlanesCuotas();
+    render();
+    renderGraficas();
+    if(settings.tcActivado) renderGraficasTC();
+    showToast((a||b) ? 'Se registraron movimientos programados ✅' : 'Ya está todo al día ✅');
+  };
+  document.getElementById('btnTC').onclick = ()=>{
+    setSwitch('swTcActivado', settings.tcActivado);
+    toggleOverlay('overlayTC', true);
+  };
+  document.getElementById('closeOverlayTC').onclick = ()=>toggleOverlay('overlayTC', false);
+
+  // ---------- Guías: Centro de Control / Widget ----------
+  function guideStepsHtml(steps){
+    return steps.map((s,i)=>`
+      <div class="guide-step">
+        <div class="guide-num">${i+1}</div>
+        <div>
+          <div class="guide-step-title">${s.title}</div>
+          <div class="guide-step-desc">${s.desc}</div>
+        </div>
+      </div>`).join('');
+  }
+  function buildShortcutSteps(){
+    const baseUrl = window.location.origin + window.location.pathname;
+    const cuentasTxtRaw = data.cuentas.length ? data.cuentas.map(c=>c.nombre).join(', ') : '(agrega tus cuentas primero para tener nombres que usar aquí)';
+    const cuentasTxt = escapeHtml(cuentasTxtRaw);
+    const baseUrlSafe = escapeHtml(baseUrl);
+    return [
+      {title:'Crea un Atajo nuevo', desc:'Abre la app <b>Atajos</b> de Apple &gt; toca + &gt; "Atajo nuevo".'},
+      {title:'Pregunta el tipo', desc:'Agrega "Preguntar por entrada" tipo <b>Lista</b>: "¿Ingreso o Egreso?" con opciones Ingreso y Egreso.'},
+      {title:'Pregunta la cuenta', desc:'Agrega otra "Preguntar por entrada" tipo <b>Lista</b>: "¿Qué cuenta?" con estas opciones exactas: <code>'+cuentasTxt+'</code>'},
+      {title:'Pregunta el monto', desc:'Agrega "Preguntar por entrada" tipo <b>Número</b>: "¿Monto?". Opcional: una cuarta tipo Texto para la descripción.'},
+      {title:'Arma la URL', desc:'Agrega la acción <b>URL</b> con: <code>'+baseUrlSafe+'?quickadd=1&tipo=[P1]&cuenta=[P2]&monto=[P3]&desc=[P4]</code>, insertando cada variable de las preguntas anteriores en su lugar.'},
+      {title:'Abre la URL', desc:'Agrega la acción <b>"Abrir URLs"</b> usando esa URL armada. Nombra el atajo, por ejemplo "Registrar movimiento".'}
+    ];
+  }
+  function openGuideCC(){
+    const steps = buildShortcutSteps().concat([
+      {title:'Activa el módulo en Ajustes', desc:'Ve a <b>Ajustes del iPhone &gt; Centro de Control</b>, y agrega el módulo <b>"Accesos Directos"</b> si no está ya en tu Centro de Control (con el botón + verde).'},
+      {title:'Úsalo desde el Centro de Control', desc:'Abre el Centro de Control (desliza desde la esquina superior derecha), toca el ícono de Accesos Directos, y elige "Registrar movimiento". Ahí mismo, sin abrir la app, te va a preguntar tipo, cuenta y monto.'}
+    ]);
+    document.getElementById('guideCCSteps').innerHTML = guideStepsHtml(steps);
+    toggleOverlay('overlayGuideCC', true);
+  }
+  function openGuideWidget(){
+    const steps = buildShortcutSteps().concat([
+      {title:'Mantén presionada la pantalla de inicio', desc:'En cualquier parte vacía de tu pantalla de inicio, mantén el dedo hasta que los íconos empiecen a moverse, y toca el + arriba a la izquierda.'},
+      {title:'Busca el widget de Atajos', desc:'Busca "Atajos" en la lista, elige un tamaño (el pequeño alcanza para un solo botón), y toca "Añadir widget".'},
+      {title:'Asigna tu atajo al widget', desc:'Mantén presionado el widget recién agregado &gt; Editar Atajo &gt; elige "Registrar movimiento". Listo: ahora es un ícono en tu pantalla de inicio, sin pasar por el Centro de Control.'}
+    ]);
+    document.getElementById('guideWidgetSteps').innerHTML = guideStepsHtml(steps);
+    toggleOverlay('overlayGuideWidget', true);
+  }
+  document.getElementById('openGuideCC').onclick = openGuideCC;
+  document.getElementById('openGuideWidget').onclick = openGuideWidget;
+  document.getElementById('closeGuideCC').onclick = ()=>toggleOverlay('overlayGuideCC', false);
+  document.getElementById('closeGuideWidget').onclick = ()=>toggleOverlay('overlayGuideWidget', false);
+
+  // ---------- Selector de emoji / color ----------
+  function buildPickers(){
+    ['emojiPicker','emojiPickerTC'].forEach(id=>{
+      const ep = document.getElementById(id);
+      if(!ep) return;
+      ep.innerHTML = '';
+      EMOJIS.forEach(e=>{
+        const b = document.createElement('div');
+        b.className = 'emoji-opt' + (selectedEmoji===e ? ' sel':'');
+        b.textContent = e;
+        b.onclick = ()=>{ selectedEmoji = (selectedEmoji===e ? '' : e); buildPickers(); };
+        ep.appendChild(b);
+      });
+    });
+    ['colorPicker','colorPickerTC'].forEach(id=>{
+      const cp = document.getElementById(id);
+      if(!cp) return;
+      cp.innerHTML = '';
+      COLORS.forEach(col=>{
+        const b = document.createElement('div');
+        b.className = 'color-opt' + (selectedColor===col ? ' sel':'');
+        b.style.background = col;
+        b.onclick = ()=>{ selectedColor = (selectedColor===col ? '' : col); buildPickers(); };
+        cp.appendChild(b);
+      });
+    });
+  }
+
+  // ---------- Cuentas: crear / editar ----------
+  function resetCuentaForm(){
+    document.getElementById('inCuentaNombre').value = '';
+    document.getElementById('inCuentaSaldo').value = '';
+    document.getElementById('inEA').value = '';
+    selectedEmoji = ''; selectedColor = '';
+    pendingAutomaticos = [];
+    setSwitch('swIncluir', true);
+    setSwitch('swRendimiento', false);
+    setSwitch('swProgramar', false);
+    document.getElementById('fieldEA').style.display = 'none';
+    document.getElementById('automaticosSection').style.display = 'none';
+    buildPickers();
+    renderAutomaticosList();
+  }
+  function setSwitch(id, on){ document.getElementById(id).classList.toggle('on', on); }
+  function isOn(id){ return document.getElementById(id).classList.contains('on'); }
+
+  document.getElementById('swIncluir').onclick = ()=>setSwitch('swIncluir', !isOn('swIncluir'));
+  document.getElementById('swRendimiento').onclick = ()=>{
+    const on = !isOn('swRendimiento');
+    setSwitch('swRendimiento', on);
+    document.getElementById('fieldEA').style.display = on ? 'block' : 'none';
+  };
+  document.getElementById('swProgramar').onclick = ()=>{
+    const on = !isOn('swProgramar');
+    setSwitch('swProgramar', on);
+    document.getElementById('automaticosSection').style.display = on ? 'block' : 'none';
+  };
+
+  const FREQ_LABELS = {una_vez:'Solo una vez', diaria:'Diaria', semanal:'Semanal', quincenal:'Cada 15 días', mensual:'Mensual', anual:'Anual'};
+  function renderAutomaticosList(){
+    const box = document.getElementById('automaticosList');
+    if(!pendingAutomaticos.length){
+      box.innerHTML = '<div class="empty" style="margin-bottom:10px;">Todavía no tienes movimientos programados en esta cuenta.</div>';
+      return;
+    }
+    box.innerHTML = '';
+    pendingAutomaticos.forEach(r=>{
+      const proxima = new Date(r.proxima || r.inicio);
+      const row = document.createElement('div');
+      row.className = 'auto-item';
+      row.innerHTML = `<div class="auto-mid">
+          <div class="auto-title">${r.tipo==='Ingreso'?'↑':'↓'} ${fmt(r.monto)} ${r.descripcion?'· '+escapeHtml(r.descripcion):''}</div>
+          <div class="auto-meta">${FREQ_LABELS[r.frecuencia]}${r.categoria?' · '+escapeHtml(r.categoria):''} · próxima: ${proxima.toLocaleDateString('es-CO')} ${proxima.toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'})}</div>
+        </div>
+        <button class="auto-del" data-id="${r.id}">✕</button>`;
+      row.querySelector('.auto-del').onclick = ()=>{
+        pendingAutomaticos = pendingAutomaticos.filter(x=>x.id!==r.id);
+        renderAutomaticosList();
+      };
+      box.appendChild(row);
+    });
+  }
+
+  document.getElementById('btnAddAutomatico').onclick = ()=>{
+    autoTipoSel = 'Ingreso';
+    document.getElementById('autoTipoIngreso').classList.add('sel','in');
+    document.getElementById('autoTipoEgreso').classList.remove('sel','out');
+    document.getElementById('inAutoMonto').value = '';
+    document.getElementById('inAutoDesc').value = '';
+    document.getElementById('inAutoFecha').value = '';
+    document.getElementById('selAutoFrecuencia').value = 'mensual';
+    poblarCategorias('inAutoCategoria', autoTipoSel);
+    toggleOverlay('overlayAutomatico', true);
+  };
+  document.getElementById('cancelAutomatico').onclick = ()=>toggleOverlay('overlayAutomatico', false);
+  document.getElementById('autoTipoIngreso').onclick = ()=>{
+    autoTipoSel='Ingreso';
+    document.getElementById('autoTipoIngreso').classList.add('sel','in');
+    document.getElementById('autoTipoEgreso').classList.remove('sel','out');
+    poblarCategorias('inAutoCategoria', autoTipoSel);
+  };
+  document.getElementById('autoTipoEgreso').onclick = ()=>{
+    autoTipoSel='Egreso';
+    document.getElementById('autoTipoEgreso').classList.add('sel','out');
+    document.getElementById('autoTipoIngreso').classList.remove('sel','in');
+    poblarCategorias('inAutoCategoria', autoTipoSel);
+  };
+  document.getElementById('saveAutomatico').onclick = ()=>{
+    const monto = currencyValue(document.getElementById('inAutoMonto'));
+    const categoria = document.getElementById('inAutoCategoria').value;
+    const descripcion = document.getElementById('inAutoDesc').value.trim();
+    const fechaVal = document.getElementById('inAutoFecha').value;
+    const frecuencia = document.getElementById('selAutoFrecuencia').value;
+    if(!monto || monto<=0){ showToast('Escribe un monto válido'); return; }
+    if(!fechaVal){ showToast('Elige la fecha y hora del primer movimiento'); return; }
+    const inicio = new Date(fechaVal).toISOString();
+    pendingAutomaticos.push({
+      id: uid(), tipo: autoTipoSel, monto, descripcion, categoria, frecuencia,
+      inicio, proxima: inicio, activo: true
+    });
+    renderAutomaticosList();
+    toggleOverlay('overlayAutomatico', false);
+    showToast('Programación agregada');
+  };
+
+  function openNewCuenta(){
+    editingCuentaId = null;
+    document.getElementById('cuentaTitulo').textContent = 'Agregar cuenta';
+    document.getElementById('fieldSaldoInicial').style.display = 'block';
+    document.getElementById('deleteRow').style.display = 'none';
+    resetCuentaForm();
+    toggleOverlay('overlayCuenta', true);
+  }
+  function openEditCuenta(id){
+    const c = data.cuentas.find(c=>c.id===id);
+    if(!c) return;
+    editingCuentaId = id;
+    document.getElementById('cuentaTitulo').textContent = 'Editar cuenta';
+    document.getElementById('fieldSaldoInicial').style.display = 'none';
+    document.getElementById('deleteRow').style.display = 'flex';
+    document.getElementById('inCuentaNombre').value = c.nombre;
+    selectedEmoji = c.emoji || ''; selectedColor = c.color || '';
+    setSwitch('swIncluir', c.incluirTotal);
+    setSwitch('swRendimiento', !!c.rendimiento);
+    document.getElementById('fieldEA').style.display = c.rendimiento ? 'block' : 'none';
+    document.getElementById('inEA').value = c.rendimiento ? c.rendimiento.ea : '';
+    pendingAutomaticos = JSON.parse(JSON.stringify(c.automaticos || []));
+    const hayAuto = pendingAutomaticos.length > 0;
+    setSwitch('swProgramar', hayAuto);
+    document.getElementById('automaticosSection').style.display = hayAuto ? 'block' : 'none';
+    renderAutomaticosList();
+    buildPickers();
+    toggleOverlay('overlayCuenta', true);
+  }
+  document.getElementById('cancelCuenta').onclick = ()=>toggleOverlay('overlayCuenta', false);
+
+  document.getElementById('saveCuenta').onclick = ()=>{
+    const nombre = document.getElementById('inCuentaNombre').value.trim();
+    if(!nombre){ showToast('Escribe un nombre de cuenta'); return; }
+    const incluirTotal = isOn('swIncluir');
+    const tieneRend = isOn('swRendimiento');
+    const ea = parseFloat(document.getElementById('inEA').value || '0');
+
+    if(editingCuentaId){
+      const c = data.cuentas.find(c=>c.id===editingCuentaId);
+      if(data.cuentas.some(o=>o.id!==editingCuentaId && o.nombre.toLowerCase()===nombre.toLowerCase())){ showToast('Ya existe otra cuenta con ese nombre'); return; }
+      const oldNombre = c.nombre;
+      c.nombre = nombre;
+      c.incluirTotal = incluirTotal;
+      c.emoji = selectedEmoji; c.color = selectedColor;
+      c.rendimiento = tieneRend ? {ea: ea} : null;
+      c.automaticos = pendingAutomaticos;
+      if(oldNombre !== nombre){ data.movimientos.forEach(m=>{ if(m.cuenta===oldNombre) m.cuenta = nombre; }); }
+    } else {
+      if(data.cuentas.some(c=>c.nombre.toLowerCase()===nombre.toLowerCase())){ showToast('Esa cuenta ya existe'); return; }
+      const saldo = currencyValue(document.getElementById('inCuentaSaldo'));
+      data.cuentas.push({
+        id: uid(), nombre, saldoBase: saldo, incluirTotal,
+        emoji: selectedEmoji, color: selectedColor, oculto: false,
+        rendimiento: tieneRend ? {ea: ea} : null,
+        automaticos: pendingAutomaticos,
+        lastAccrual: new Date().toISOString()
+      });
+    }
+    save();
+    toggleOverlay('overlayCuenta', false);
+    render();
+    syncSaldosBackground();
+    showToast('Cuenta guardada');
+  };
+
+  document.getElementById('deleteCuenta').onclick = ()=>{
+    if(!editingCuentaId) return;
+    const c = data.cuentas.find(c=>c.id===editingCuentaId);
+    if(!c) return;
+    data.cuentas = data.cuentas.filter(c=>c.id!==editingCuentaId);
+    data.movimientos = data.movimientos.filter(m=>m.cuenta!==c.nombre);
+    save();
+    toggleOverlay('overlayCuenta', false);
+    render();
+    syncSaldosBackground();
+    showToast('Cuenta eliminada');
+  };
+
+  // ---------- Tarjetas de crédito: crear / editar ----------
+  function openNewTarjeta(){
+    editingTarjetaId = null;
+    document.getElementById('tarjetaTitulo').textContent = 'Agregar tarjeta';
+    document.getElementById('fieldCupoInicial').style.display = 'block';
+    document.getElementById('deleteRowTC').style.display = 'none';
+    document.getElementById('inTarjetaNombre').value = '';
+    document.getElementById('inTarjetaCupo').value = '';
+    selectedEmoji = ''; selectedColor = '';
+    setSwitch('swIncluirTC', true);
+    buildPickers();
+    toggleOverlay('overlayTarjeta', true);
+  }
+  function openEditTarjeta(id){
+    const t = data.tarjetas.find(t=>t.id===id);
+    if(!t) return;
+    editingTarjetaId = id;
+    document.getElementById('tarjetaTitulo').textContent = 'Editar tarjeta';
+    document.getElementById('fieldCupoInicial').style.display = 'none';
+    document.getElementById('deleteRowTC').style.display = 'flex';
+    document.getElementById('inTarjetaNombre').value = t.nombre;
+    selectedEmoji = t.emoji || ''; selectedColor = t.color || '';
+    setSwitch('swIncluirTC', t.incluirTotal);
+    buildPickers();
+    toggleOverlay('overlayTarjeta', true);
+  }
+  document.getElementById('cancelTarjeta').onclick = ()=>toggleOverlay('overlayTarjeta', false);
+  document.getElementById('swIncluirTC').onclick = ()=>setSwitch('swIncluirTC', !isOn('swIncluirTC'));
+
+  document.getElementById('saveTarjeta').onclick = ()=>{
+    const nombre = document.getElementById('inTarjetaNombre').value.trim();
+    if(!nombre){ showToast('Escribe un nombre de tarjeta'); return; }
+    const incluirTotal = isOn('swIncluirTC');
+
+    if(editingTarjetaId){
+      const t = data.tarjetas.find(t=>t.id===editingTarjetaId);
+      if(data.tarjetas.some(o=>o.id!==editingTarjetaId && o.nombre.toLowerCase()===nombre.toLowerCase())){ showToast('Ya existe otra tarjeta con ese nombre'); return; }
+      const oldNombre = t.nombre;
+      t.nombre = nombre;
+      t.incluirTotal = incluirTotal;
+      t.emoji = selectedEmoji; t.color = selectedColor;
+      if(oldNombre !== nombre){
+        data.movimientosTC.forEach(m=>{ if(m.tarjeta===oldNombre) m.tarjeta = nombre; });
+        data.planesCuotas.forEach(p=>{ if(p.tarjeta===oldNombre) p.tarjeta = nombre; });
+      }
+    } else {
+      if(data.tarjetas.some(t=>t.nombre.toLowerCase()===nombre.toLowerCase())){ showToast('Esa tarjeta ya existe'); return; }
+      const cupoInicial = currencyValue(document.getElementById('inTarjetaCupo'));
+      data.tarjetas.push({
+        id: uid(), nombre, cupoInicial, incluirTotal,
+        emoji: selectedEmoji, color: selectedColor, oculto: false
+      });
+    }
+    save();
+    toggleOverlay('overlayTarjeta', false);
+    render();
+    showToast('Tarjeta guardada');
+  };
+
+  document.getElementById('deleteTarjeta').onclick = ()=>{
+    if(!editingTarjetaId) return;
+    const tActual = data.tarjetas.find(t=>t.id===editingTarjetaId);
+    if(!tActual) return;
+    const tarjetaNombre = tActual.nombre;
+    data.tarjetas = data.tarjetas.filter(t=>t.id!==editingTarjetaId);
+    data.movimientosTC = data.movimientosTC.filter(m=>m.tarjeta!==tarjetaNombre);
+    data.planesCuotas = data.planesCuotas.filter(p=>p.tarjeta!==tarjetaNombre);
+    save();
+    toggleOverlay('overlayTarjeta', false);
+    render();
+    showToast('Tarjeta eliminada');
+  };
+
+  // ---------- Movimientos ----------
+  document.getElementById('btnAddMov').onclick = ()=>{
+    if(!data.cuentas.length){ showToast('Primero agrega una cuenta'); return; }
+    poblarCategorias('inMovCategoria', tipoSel);
+    toggleOverlay('overlayMov', true);
+  };
+  document.getElementById('cancelMov').onclick = ()=>toggleOverlay('overlayMov', false);
+  document.getElementById('tipoIngreso').onclick = ()=>{
+    tipoSel='Ingreso';
+    document.getElementById('tipoIngreso').classList.add('sel','in');
+    document.getElementById('tipoEgreso').classList.remove('sel','out');
+    poblarCategorias('inMovCategoria', tipoSel);
+  };
+  document.getElementById('tipoEgreso').onclick = ()=>{
+    tipoSel='Egreso';
+    document.getElementById('tipoEgreso').classList.add('sel','out');
+    document.getElementById('tipoIngreso').classList.remove('sel','in');
+    poblarCategorias('inMovCategoria', tipoSel);
+  };
+
+  function registrarMovimiento(tipo, cuenta, monto, descripcion, groupId, categoria){
+    const now = new Date();
+    const m = { id: uid(), tipo, cuenta, monto, descripcion: descripcion||'', categoria: categoria||'', groupId: groupId||null, fecha: now.toISOString(), fechaLabel: todayLabel() };
+    data.movimientos.push(m);
+    save();
+    render();
+    syncMovimientoBackground(m);
+    return m;
+  }
+
+  document.getElementById('saveMov').onclick = ()=>{
+    const cuenta = document.getElementById('inMovCuenta').value;
+    const categoria = document.getElementById('inMovCategoria').value;
+    const monto = currencyValue(document.getElementById('inMovMonto'));
+    const descripcion = document.getElementById('inMovDesc').value.trim();
+    if(!cuenta){ showToast('Selecciona una cuenta'); return; }
+    if(!monto || monto<=0){ showToast('Escribe un monto válido'); return; }
+    if(tipoSel === 'Egreso' && (saldoCuenta(cuenta) - monto) < 0){
+      showToast('No hay saldo suficiente en '+cuenta+' (disponible: '+fmt(saldoCuenta(cuenta))+')');
+      return;
+    }
+    registrarMovimiento(tipoSel, cuenta, monto, descripcion, undefined, categoria);
+    document.getElementById('inMovMonto').value=''; document.getElementById('inMovDesc').value='';
+    toggleOverlay('overlayMov', false);
+    showToast('Movimiento guardado');
+  };
+
+  // ---------- Movimientos de tarjetas de crédito ----------
+  function registrarMovimientoTC(tipo, tarjeta, monto, descripcion, cuentaRelacionada, groupId){
+    const now = new Date();
+    const m = { id: uid(), tipo, tarjeta, monto, descripcion: descripcion||'', cuentaRelacionada: cuentaRelacionada||null, groupId: groupId||null, fecha: now.toISOString(), fechaLabel: todayLabel() };
+    data.movimientosTC.push(m);
+    save();
+    render();
+    syncMovimientoBackground({ tipo: m.tipo, cuenta: 'TC: '+tarjeta, monto: m.monto,
+      descripcion: m.descripcion + (cuentaRelacionada ? ' · Cuenta origen: '+cuentaRelacionada : ''),
+      fecha: m.fecha });
+    return m;
+  }
+
+  function actualizarCuotaPreview(){
+    const monto = currencyValue(document.getElementById('inMovTCMonto'));
+    const cuotas = parseInt(document.getElementById('inCompraCuotas').value || '0', 10);
+    const conInteres = isOn('swCompraInteres');
+    const ea = parseFloat(document.getElementById('inCompraEA').value || '0');
+    const prev = document.getElementById('cuotaPreview');
+    if(!monto || !cuotas || cuotas<1){ prev.textContent = ''; return; }
+    const valorCuota = calcularCuotaFija(monto, cuotas, conInteres ? ea : 0);
+    prev.textContent = `Cada cuota quedaría en ${fmt(valorCuota)} × ${cuotas} = ${fmt(valorCuota*cuotas)} en total.`;
+  }
+
+  document.getElementById('btnAddMovTC').onclick = ()=>{
+    if(!data.tarjetas.length){ showToast('Primero agrega una tarjeta'); return; }
+    tcTipoSel = 'Compra';
+    document.getElementById('tcTipoCompra').classList.add('sel','out');
+    document.getElementById('tcTipoPago').classList.remove('sel','in');
+    document.getElementById('inMovTCMonto').value = '';
+    document.getElementById('inMovTCDesc').value = '';
+    document.getElementById('fieldPagoCuenta').style.display = 'none';
+    document.getElementById('compraProgramarBlock').style.display = data.cuentas.length ? 'block' : 'none';
+    setSwitch('swProgramarCompra', false);
+    document.getElementById('programarCompraFields').style.display = 'none';
+    setSwitch('swCompraInteres', false);
+    document.getElementById('fieldCompraEA').style.display = 'none';
+    document.getElementById('inCompraCuotas').value = '';
+    document.getElementById('inCompraFecha').value = '';
+    document.getElementById('inCompraEA').value = '';
+    document.getElementById('cuotaPreview').textContent = '';
+    toggleOverlay('overlayMovTC', true);
+  };
+  document.getElementById('cancelMovTC').onclick = ()=>toggleOverlay('overlayMovTC', false);
+
+  document.getElementById('tcTipoCompra').onclick = ()=>{
+    tcTipoSel = 'Compra';
+    document.getElementById('tcTipoCompra').classList.add('sel','out');
+    document.getElementById('tcTipoPago').classList.remove('sel','in');
+    document.getElementById('fieldPagoCuenta').style.display = 'none';
+    document.getElementById('compraProgramarBlock').style.display = data.cuentas.length ? 'block' : 'none';
+  };
+  document.getElementById('tcTipoPago').onclick = ()=>{
+    tcTipoSel = 'Pago';
+    document.getElementById('tcTipoPago').classList.add('sel','in');
+    document.getElementById('tcTipoCompra').classList.remove('sel','out');
+    document.getElementById('compraProgramarBlock').style.display = 'none';
+    document.getElementById('fieldPagoCuenta').style.display = data.cuentas.length ? 'block' : 'none';
+    if(!data.cuentas.length) showToast('Necesitas al menos una cuenta creada para registrar un pago');
+  };
+  document.getElementById('swProgramarCompra').onclick = ()=>{
+    const on = !isOn('swProgramarCompra');
+    setSwitch('swProgramarCompra', on);
+    document.getElementById('programarCompraFields').style.display = on ? 'block' : 'none';
+  };
+  document.getElementById('swCompraInteres').onclick = ()=>{
+    const on = !isOn('swCompraInteres');
+    setSwitch('swCompraInteres', on);
+    document.getElementById('fieldCompraEA').style.display = on ? 'block' : 'none';
+    actualizarCuotaPreview();
+  };
+  ['inMovTCMonto','inCompraCuotas','inCompraEA'].forEach(id=>{
+    document.getElementById(id).addEventListener('input', actualizarCuotaPreview);
+  });
+
+  document.getElementById('saveMovTC').onclick = ()=>{
+    const tarjeta = document.getElementById('inMovTCTarjeta').value;
+    const monto = currencyValue(document.getElementById('inMovTCMonto'));
+    const descripcion = document.getElementById('inMovTCDesc').value.trim();
+    if(!tarjeta){ showToast('Selecciona una tarjeta'); return; }
+    if(!monto || monto<=0){ showToast('Escribe un monto válido'); return; }
+
+    if(tcTipoSel === 'Pago'){
+      const cuentaPago = document.getElementById('inMovTCCuentaPago').value;
+      if(!cuentaPago){ showToast('Selecciona desde qué cuenta se paga'); return; }
+      if((saldoCuenta(cuentaPago) - monto) < 0){
+        showToast('No hay saldo suficiente en '+cuentaPago+' (disponible: '+fmt(saldoCuenta(cuentaPago))+')');
+        return;
+      }
+      const linkId = uid();
+      registrarMovimiento('Egreso', cuentaPago, monto, 'Pago tarjeta ' + tarjeta + (descripcion ? ' · '+descripcion : ''), linkId);
+      registrarMovimientoTC('Pago', tarjeta, monto, descripcion, cuentaPago, linkId);
+      toggleOverlay('overlayMovTC', false);
+      showToast('Pago registrado: cupo liberado y descontado de '+cuentaPago);
+      return;
+    }
+
+    // Compra
+    if((cupoDisponible(tarjeta) - monto) < 0){
+      showToast('No hay cupo suficiente en '+tarjeta+' (disponible: '+fmt(cupoDisponible(tarjeta))+')');
+      return;
+    }
+    registrarMovimientoTC('Compra', tarjeta, monto, descripcion, null);
+
+    if(isOn('swProgramarCompra')){
+      const cuotas = parseInt(document.getElementById('inCompraCuotas').value || '0', 10);
+      const fechaVal = document.getElementById('inCompraFecha').value;
+      const cuentaCuotas = document.getElementById('inCompraCuenta').value;
+      const conInteres = isOn('swCompraInteres');
+      const ea = parseFloat(document.getElementById('inCompraEA').value || '0');
+      if(!cuotas || cuotas<1){ showToast('Compra guardada, pero indica a cuántas cuotas para programar el pago'); toggleOverlay('overlayMovTC', false); return; }
+      if(!fechaVal){ showToast('Compra guardada, pero falta la fecha del primer pago para programarlo'); toggleOverlay('overlayMovTC', false); return; }
+      if(!cuentaCuotas){ showToast('Compra guardada, pero falta la cuenta que pagará las cuotas'); toggleOverlay('overlayMovTC', false); return; }
+      const montoCuota = calcularCuotaFija(monto, cuotas, conInteres ? ea : 0);
+      const inicio = new Date(fechaVal).toISOString();
+      data.planesCuotas.push({
+        id: uid(), tarjeta, cuenta: cuentaCuotas, cuotasTotal: cuotas, cuotasPagadas: 0,
+        montoCuota, descripcion, interesEA: conInteres ? ea : 0,
+        inicio, proxima: inicio, activo: true
+      });
+      save();
+      showToast('Compra guardada y pago automático programado a '+cuotas+' cuotas');
+    } else {
+      showToast('Compra registrada');
+    }
+    toggleOverlay('overlayMovTC', false);
+  };
+
+  // ---------- Google Sheets ----------
+  function getTokenClient(){
+    if(!HARDCODED_CLIENT_ID || HARDCODED_CLIENT_ID.indexOf('PEGA_AQUI') === 0 || typeof google === 'undefined') return null;
+    if(!tokenClient){
+      tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: HARDCODED_CLIENT_ID,
+        scope: 'https://www.googleapis.com/auth/drive.file',
+        callback: ()=>{}
+      });
+    }
+    return tokenClient;
+  }
+
+  function getToken(interactive){
+    return new Promise((resolve,reject)=>{
+      const cached = JSON.parse(localStorage.getItem(TOKEN_KEY) || 'null');
+      if(cached && cached.expires_at > Date.now()+60000){ resolve(cached.access_token); return; }
+      const tc = getTokenClient();
+      if(!tc){ reject('no-client-id'); return; }
+      tc.callback = (resp)=>{
+        if(resp.error){ reject(resp.error); return; }
+        const expires_at = Date.now() + (resp.expires_in*1000);
+        localStorage.setItem(TOKEN_KEY, JSON.stringify({access_token: resp.access_token, expires_at}));
+        resolve(resp.access_token);
+      };
+      tc.requestAccessToken({ prompt: interactive ? 'consent' : '' });
+    });
+  }
+
+  function colLetter(idx0){
+    let n = idx0 + 1, s = '';
+    while(n>0){ const m=(n-1)%26; s = String.fromCharCode(65+m)+s; n=Math.floor((n-1)/26); }
+    return s;
+  }
+
+  // ---------- Formato visual de la hoja (paleta de CashMap) ----------
+  const XL_NAVY = {red:0.0824, green:0.1333, blue:0.2196};   // --ink
+  const XL_MINT = {red:0.0824, green:0.6039, blue:0.5020};   // --mint-deep
+  const XL_MINT_SOFT = {red:0.851, green:0.961, blue:0.925}; // --up-soft / --mint-soft
+  const XL_WHITE = {red:1, green:1, blue:1};
+  const XL_LINE = {red:0.878, green:0.898, blue:0.941}; // gris azulado suave, igual al --line de la app
+
+  async function sheetsBatchUpdate(token, sheetId, requests){
+    if(!requests.length) return;
+    const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}:batchUpdate`, {
+      method:'POST', headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},
+      body: JSON.stringify({requests})
+    });
+    if(!res.ok){
+      const j = await res.json().catch(()=>({}));
+      throw new Error((j.error && j.error.message) ? j.error.message : ('HTTP '+res.status));
+    }
+  }
+
+  function xlHeaderRequest(gridId, endColumnIndex){
+    return { repeatCell: {
+      range: {sheetId:gridId, startRowIndex:0, endRowIndex:1, startColumnIndex:0, endColumnIndex},
+      cell: { userEnteredFormat: {
+        backgroundColor: XL_NAVY,
+        textFormat: {foregroundColor: XL_WHITE, bold:true, fontSize:11, fontFamily:'Roboto'},
+        horizontalAlignment: 'CENTER', verticalAlignment: 'MIDDLE',
+        borders: { bottom: { style:'SOLID_THICK', color: XL_MINT } }
+      }},
+      fields: 'userEnteredFormat(backgroundColor,textFormat,horizontalAlignment,verticalAlignment,borders)'
+    }};
+  }
+  function xlBodyFontRequest(gridId, endColumnIndex){
+    return { repeatCell: {
+      range: {sheetId:gridId, startRowIndex:1, startColumnIndex:0, endColumnIndex},
+      cell: { userEnteredFormat: { textFormat: {fontFamily:'Roboto', fontSize:10}, verticalAlignment:'MIDDLE' } },
+      fields: 'userEnteredFormat(textFormat,verticalAlignment)'
+    }};
+  }
+  function xlCurrencyRequest(gridId, startColumnIndex, endColumnIndex){
+    return { repeatCell: {
+      range: {sheetId:gridId, startRowIndex:1, startColumnIndex, endColumnIndex},
+      cell: { userEnteredFormat: { numberFormat: {type:'CURRENCY', pattern:'$#,##0'}, horizontalAlignment:'RIGHT' } },
+      fields: 'userEnteredFormat.numberFormat,userEnteredFormat.horizontalAlignment'
+    }};
+  }
+  function xlDateRequest(gridId, columnIndex){
+    return { repeatCell: {
+      range: {sheetId:gridId, startRowIndex:1, startColumnIndex:columnIndex, endColumnIndex:columnIndex+1},
+      cell: { userEnteredFormat: { numberFormat: {type:'DATE_TIME', pattern:'dd/mm/yyyy hh:mm'}, horizontalAlignment:'CENTER' } },
+      fields: 'userEnteredFormat.numberFormat,userEnteredFormat.horizontalAlignment'
+    }};
+  }
+  function xlColWidth(gridId, startIndex, endIndex, pixelSize){
+    return { updateDimensionProperties: {
+      range: {sheetId:gridId, dimension:'COLUMNS', startIndex, endIndex},
+      properties: {pixelSize}, fields: 'pixelSize'
+    }};
+  }
+  function xlRowHeight(gridId, startIndex, endIndex, pixelSize){
+    return { updateDimensionProperties: {
+      range: {sheetId:gridId, dimension:'ROWS', startIndex, endIndex},
+      properties: {pixelSize}, fields: 'pixelSize'
+    }};
+  }
+
+  async function aplicarFormatoHoja(token, spreadsheetId, gridMov, gridSaldos){
+    const requests = [
+      // Idioma/formato regional: evita ambigüedad en fechas (DD/MM vs MM/DD) sin importar la cuenta de Google usada.
+      { updateSpreadsheetProperties: { properties: { locale:'es_CO' }, fields:'locale' } },
+
+      { updateSheetProperties: { properties: { sheetId: gridMov, gridProperties:{frozenRowCount:1}, tabColor: XL_MINT }, fields: 'gridProperties.frozenRowCount,tabColor' } },
+      { updateSheetProperties: { properties: { sheetId: gridSaldos, gridProperties:{frozenRowCount:1, frozenColumnCount:1}, tabColor: XL_NAVY }, fields: 'gridProperties.frozenRowCount,gridProperties.frozenColumnCount,tabColor' } },
+
+      xlHeaderRequest(gridMov, 6),
+      xlHeaderRequest(gridSaldos, 12),
+      xlBodyFontRequest(gridMov, 6),
+      xlBodyFontRequest(gridSaldos, 12),
+
+      xlRowHeight(gridMov, 0, 1, 30),
+      xlRowHeight(gridSaldos, 0, 1, 30),
+      xlRowHeight(gridMov, 1, 2000, 24),
+      xlRowHeight(gridSaldos, 1, 2000, 24),
+
+      { addBanding: { bandedRange: { range:{sheetId:gridMov, startRowIndex:1, startColumnIndex:0, endColumnIndex:6},
+          rowProperties: { firstBandColor:XL_WHITE, secondBandColor:XL_MINT_SOFT } } } },
+      { addBanding: { bandedRange: { range:{sheetId:gridSaldos, startRowIndex:1, startColumnIndex:0, endColumnIndex:12},
+          rowProperties: { firstBandColor:XL_WHITE, secondBandColor:XL_MINT_SOFT } } } },
+
+      xlCurrencyRequest(gridMov, 2, 3),
+      xlCurrencyRequest(gridSaldos, 1, 12),
+      xlDateRequest(gridMov, 0),
+      xlDateRequest(gridSaldos, 0),
+
+      // Bordes finos en toda la zona de datos, para un acabado de tabla más prolijo.
+      { updateBorders: {
+          range: {sheetId:gridMov, startRowIndex:0, endRowIndex:1000, startColumnIndex:0, endColumnIndex:6},
+          top:{style:'SOLID', color:XL_LINE}, bottom:{style:'SOLID', color:XL_LINE},
+          left:{style:'SOLID', color:XL_LINE}, right:{style:'SOLID', color:XL_LINE},
+          innerHorizontal:{style:'SOLID', color:XL_LINE}, innerVertical:{style:'SOLID', color:XL_LINE}
+      }},
+      { updateBorders: {
+          range: {sheetId:gridSaldos, startRowIndex:0, endRowIndex:1000, startColumnIndex:0, endColumnIndex:12},
+          top:{style:'SOLID', color:XL_LINE}, bottom:{style:'SOLID', color:XL_LINE},
+          left:{style:'SOLID', color:XL_LINE}, right:{style:'SOLID', color:XL_LINE},
+          innerHorizontal:{style:'SOLID', color:XL_LINE}, innerVertical:{style:'SOLID', color:XL_LINE}
+      }},
+
+      // Columna "Total disponible" resaltada: es el dato más importante de la hoja Saldos.
+      { repeatCell: {
+          range: {sheetId:gridSaldos, startRowIndex:1, startColumnIndex:1, endColumnIndex:2},
+          cell: { userEnteredFormat: { textFormat:{bold:true, fontFamily:'Roboto', fontSize:10.5}, backgroundColor: XL_MINT_SOFT } },
+          fields: 'userEnteredFormat(textFormat,backgroundColor)'
+      }},
+      // Descripción con ajuste de texto para que no se vea cortada.
+      { repeatCell: {
+          range: {sheetId:gridMov, startRowIndex:1, startColumnIndex:4, endColumnIndex:5},
+          cell: { userEnteredFormat: { wrapStrategy:'WRAP' } },
+          fields: 'userEnteredFormat.wrapStrategy'
+      }},
+
+      xlColWidth(gridMov, 0, 1, 140),
+      xlColWidth(gridMov, 1, 2, 90),
+      xlColWidth(gridMov, 2, 3, 120),
+      xlColWidth(gridMov, 3, 4, 160),
+      xlColWidth(gridMov, 4, 5, 260),
+      xlColWidth(gridMov, 5, 6, 170),
+      xlColWidth(gridSaldos, 0, 1, 140),
+      xlColWidth(gridSaldos, 1, 2, 140),
+
+      { addConditionalFormatRule: { index:0, rule: {
+          ranges:[{sheetId:gridMov, startRowIndex:1, startColumnIndex:0, endColumnIndex:6}],
+          booleanRule: {
+            condition: { type:'CUSTOM_FORMULA', values:[{userEnteredValue:'=OR($B2="Egreso",$B2="Compra")'}] },
+            format: { backgroundColor: {red:0.984,green:0.902,blue:0.894} }
+          }
+        }}},
+      { addConditionalFormatRule: { index:0, rule: {
+          ranges:[{sheetId:gridMov, startRowIndex:1, startColumnIndex:0, endColumnIndex:6}],
+          booleanRule: {
+            condition: { type:'CUSTOM_FORMULA', values:[{userEnteredValue:'=OR($B2="Ingreso",$B2="Pago")'}] },
+            format: { backgroundColor: XL_MINT_SOFT }
+          }
+        }}}
+    ];
+    await sheetsBatchUpdate(token, spreadsheetId, requests);
+  }
+
+  async function obtenerGridIds(token, spreadsheetId){
+    const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?fields=sheets.properties`, {
+      headers:{'Authorization':'Bearer '+token}
+    });
+    const j = await res.json();
+    if(!res.ok) throw new Error((j.error && j.error.message) ? j.error.message : ('HTTP '+res.status));
+    const mov = j.sheets.find(s=>s.properties.title==='Movimientos');
+    const sal = j.sheets.find(s=>s.properties.title==='Saldos');
+    if(!mov || !sal) throw new Error('No se encontraron las hojas Movimientos/Saldos');
+    return { gridMov: mov.properties.sheetId, gridSaldos: sal.properties.sheetId };
+  }
+
+  const ESTILO_HOJA_VERSION = 4;
+
+  async function ensureSheet(token){
+    if(settings.sheetId){
+      if(settings.estiloVersion !== ESTILO_HOJA_VERSION){
+        try{
+          const ids = (settings.gridMov!==undefined && settings.gridSaldos!==undefined)
+            ? { gridMov: settings.gridMov, gridSaldos: settings.gridSaldos }
+            : await obtenerGridIds(token, settings.sheetId);
+          settings.gridMov = ids.gridMov;
+          settings.gridSaldos = ids.gridSaldos;
+          // Asegura el encabezado "Categoría" en hojas creadas antes de esta función.
+          await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${settings.sheetId}/values/Movimientos!A1:F1?valueInputOption=RAW`, {
+            method:'PUT', headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},
+            body: JSON.stringify({values:[['Fecha','Tipo','Cantidad','Cuenta','Descripción','Categoría']]})
+          });
+          await aplicarFormatoHoja(token, settings.sheetId, ids.gridMov, ids.gridSaldos);
+          settings.estiloVersion = ESTILO_HOJA_VERSION;
+          saveSettingsLS();
+        }catch(e){ /* el formato es cosmético, si falla no debe romper la sincronización */ }
+      }
+      return settings.sheetId;
+    }
+    const res = await fetch('https://sheets.googleapis.com/v4/spreadsheets', {
+      method:'POST',
+      headers:{'Authorization':'Bearer '+token, 'Content-Type':'application/json'},
+      body: JSON.stringify({
+        properties: {title:'Reckly'},
+        sheets: [{properties:{title:'Movimientos'}}, {properties:{title:'Saldos'}}]
+      })
+    });
+    const j = await res.json();
+    if(!res.ok || !j.spreadsheetId){
+      const msg = (j.error && j.error.message) ? j.error.message : ('HTTP '+res.status);
+      throw new Error(msg);
+    }
+    settings.sheetId = j.spreadsheetId;
+    settings.columnMap = {};
+    settings.gridMov = j.sheets[0].properties.sheetId;
+    settings.gridSaldos = j.sheets[1].properties.sheetId;
+    saveSettingsLS();
+    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${settings.sheetId}/values/Movimientos!A1:F1?valueInputOption=RAW`, {
+      method:'PUT', headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},
+      body: JSON.stringify({values:[['Fecha','Tipo','Cantidad','Cuenta','Descripción','Categoría']]})
+    });
+    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${settings.sheetId}/values/Saldos!A1:B1?valueInputOption=RAW`, {
+      method:'PUT', headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},
+      body: JSON.stringify({values:[['Fecha','Total disponible']]})
+    });
+    try{
+      await aplicarFormatoHoja(token, settings.sheetId, settings.gridMov, settings.gridSaldos);
+      settings.estiloVersion = ESTILO_HOJA_VERSION;
+      saveSettingsLS();
+    }
+    catch(e){ /* el formato es cosmético, si falla no debe romper la creación de la hoja */ }
+    return settings.sheetId;
+  }
+
+  async function ensureColumnsForAccounts(token, sheetId){
+    let changed = false;
+    data.cuentas.forEach(c=>{
+      if(!(c.nombre in settings.columnMap)){
+        const nextIndex = 2 + Object.keys(settings.columnMap).length;
+        settings.columnMap[c.nombre] = nextIndex;
+        changed = true;
+      }
+    });
+    if(changed){
+      saveSettingsLS();
+      const maxIndex = 1 + Object.keys(settings.columnMap).length;
+      const header = new Array(maxIndex+1).fill('');
+      header[0] = 'Fecha'; header[1] = 'Total disponible';
+      Object.entries(settings.columnMap).forEach(([nombre, idx])=>{ header[idx] = nombre; });
+      const lastLetter = colLetter(maxIndex);
+      await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Saldos!A1:${lastLetter}1?valueInputOption=RAW`, {
+        method:'PUT', headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},
+        body: JSON.stringify({values:[header]})
+      });
+      if(settings.gridSaldos!==undefined){
+        try{
+          await sheetsBatchUpdate(token, sheetId, [
+            xlHeaderRequest(settings.gridSaldos, maxIndex+1),
+            xlBodyFontRequest(settings.gridSaldos, maxIndex+1),
+            xlCurrencyRequest(settings.gridSaldos, 1, maxIndex+1),
+            xlColWidth(settings.gridSaldos, maxIndex, maxIndex+1, 130)
+          ]);
+        }catch(e){ /* cosmético, no bloquea */ }
+      }
+    }
+  }
+
+  // Fecha+hora en formato DD/MM/AAAA HH:mm (24h), sin AM/PM para que Sheets la reconozca
+  // siempre como fecha real, sin depender de la configuración regional del dispositivo.
+  function fechaHoraSheets(d){
+    const pad = n => String(n).padStart(2,'0');
+    return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
+  async function appendSaldosRow(token, sheetId){
+    await ensureColumnsForAccounts(token, sheetId);
+    const maxIndex = Object.keys(settings.columnMap).length ? (1 + Object.keys(settings.columnMap).length) : 1;
+    const row = new Array(maxIndex+1).fill('');
+    const now = new Date();
+    row[0] = fechaHoraSheets(now);
+    const total = data.cuentas.filter(c=>c.incluirTotal).reduce((a,c)=>a+saldoCuenta(c.nombre),0);
+    row[1] = Math.round(total);
+    Object.entries(settings.columnMap).forEach(([nombre, idx])=>{
+      const cuenta = data.cuentas.find(c=>c.nombre===nombre);
+      row[idx] = cuenta ? Math.round(saldoCuenta(nombre)) : '';
+    });
+    const lastLetter = colLetter(maxIndex);
+    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Saldos!A:${lastLetter}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`, {
+      method:'POST', headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},
+      body: JSON.stringify({values:[row]})
+    });
+  }
+
+  // Cola de sincronización: evita ráfagas de peticiones simultáneas a la API de
+  // Google (por ejemplo si se acumularon muchos movimientos automáticos pendientes
+  // tras varios días sin abrir la app). Procesa una a la vez, con una pequeña
+  // pausa entre cada una, en vez de disparar todas en paralelo.
+  let syncQueue = Promise.resolve();
+  function queueSync(taskFn){
+    syncQueue = syncQueue.then(taskFn).catch(()=>{}).then(()=> new Promise(r=>setTimeout(r,150)));
+    return syncQueue;
+  }
+
+  async function syncMovimientoBackground(m){
+    try{
+      const token = await getToken(false);
+      const sheetId = await ensureSheet(token);
+      const fecha = fechaHoraSheets(new Date(m.fecha));
+      await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Movimientos!A:F:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`, {
+        method:'POST', headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},
+        body: JSON.stringify({values:[[fecha, m.tipo, m.monto, sheetSafe(m.cuenta), sheetSafe(m.descripcion||''), sheetSafe(m.categoria||'')]]})
+      });
+      await appendSaldosRow(token, sheetId);
+      lastError = null;
+      render();
+    }catch(e){
+      lastError = (e && e.message) ? e.message : (typeof e==='string' ? e : JSON.stringify(e));
+      logSecurityEvent('sync_call_failed', 'Movimientos.append: '+lastError);
+      render();
+    }
+  }
+
+  async function syncSaldosBackground(){
+    try{
+      const token = await getToken(false);
+      const sheetId = await ensureSheet(token);
+      await appendSaldosRow(token, sheetId);
+      lastError = null;
+      render();
+    }catch(e){
+      lastError = (e && e.message) ? e.message : (typeof e==='string' ? e : JSON.stringify(e));
+      logSecurityEvent('sync_call_failed', 'Saldos.append: '+lastError);
+      render();
+    }
+  }
+
+  document.getElementById('btnConnect').onclick = async ()=>{
+    if(!HARDCODED_CLIENT_ID || HARDCODED_CLIENT_ID.indexOf('PEGA_AQUI') === 0){
+      showToast('Falta configurar el Client ID de Google en el código de la app');
+      return;
+    }
+    try{
+      showToast('Conectando con Google...');
+      const token = await getToken(true);
+      const sheetId = await ensureSheet(token);
+      await appendSaldosRow(token, sheetId);
+      lastError = null;
+      render();
+      logSecurityEvent('login_success', 'Conexión con Google Drive establecida');
+      showToast('Conectado y sincronizado ✅');
+    }catch(e){
+      const detalle = (e && e.message) ? e.message : (typeof e==='string' ? e : JSON.stringify(e));
+      logSecurityEvent('login_failure', detalle);
+      showError(detalle, 'No se pudo conectar con Google');
+      render();
+    }
+  };
+
+  // ---------- Quick add por URL (Atajos) ----------
+  function processQuickAdd(){
+    const p = new URLSearchParams(window.location.search);
+    if(!p.has('quickadd')) return;
+    const tipo = p.get('tipo') === 'Egreso' ? 'Egreso' : 'Ingreso';
+    const cuenta = (p.get('cuenta') || '').slice(0, 60);
+    const monto = parseFloat(p.get('monto') || '0');
+    const desc = (p.get('desc') || '').slice(0, 200);
+    history.replaceState({}, '', window.location.pathname);
+    if(!cuenta || !monto || !isFinite(monto) || monto<=0 || monto>1e12 || !data.cuentas.some(c=>c.nombre===cuenta)){
+      logSecurityEvent('quickadd_rejected', 'Parámetros inválidos o cuenta inexistente en URL de Atajo');
+      showToast('No se pudo registrar: revisa cuenta/monto del Atajo');
+      return;
+    }
+    registrarMovimiento(tipo, cuenta, monto, desc);
+    logSecurityEvent('quickadd_success', 'Movimiento registrado vía Atajo');
+    showToast('Movimiento agregado desde el Atajo ✅');
+  }
+
+  // ---------- Pager: Cuentas / Tarjetas ----------
+  const PAGE_LABELS = ['Gráficas', 'Cuentas', 'Tarjetas de crédito', 'Gráficas de tarjetas'];
+
+  function pageCount(){ return settings.tcActivado ? 4 : 2; }
+
+  function updatePagerVisibility(){
+    document.getElementById('pageTarjetas').style.display = settings.tcActivado ? '' : 'none';
+    document.getElementById('pageGraficasTC').style.display = settings.tcActivado ? '' : 'none';
+    document.getElementById('btnActivarTC').style.display = settings.tcActivado ? 'none' : 'block';
+    document.getElementById('tcDot').style.display = settings.tcActivado ? 'block' : 'none';
+    const dots = document.querySelectorAll('.ind-dot');
+    dots.forEach((d,i)=>{ d.style.display = i < pageCount() ? 'inline-block' : 'none'; });
+    if(!settings.tcActivado && currentPageIndex >= 2){
+      goToPage(1);
+    }
+  }
+
+  function goToPage(idx){
+    const vp = document.getElementById('pagerViewport');
+    vp.scrollTo({left: idx * vp.clientWidth, behavior:'smooth'});
+  }
+  function setActivePage(idx){
+    currentPageIndex = idx;
+    document.querySelectorAll('.ind-dot').forEach(d=> d.classList.toggle('active', parseInt(d.dataset.i,10)===idx));
+    document.getElementById('pageLabel').textContent = PAGE_LABELS[idx] || '';
+    document.getElementById('btnAddMov').style.display = idx===1 ? 'flex' : 'none';
+    document.getElementById('btnAddMovTC').style.display = idx===2 ? 'flex' : 'none';
+    if(idx===0 && chartsStale) renderGraficas();
+    if(idx===3 && chartsTCStale) renderGraficasTC();
+  }
+  (function(){
+    const vp = document.getElementById('pagerViewport');
+    let scrollTimeout;
+    vp.addEventListener('scroll', ()=>{
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(()=>{
+        const idx = Math.round(vp.scrollLeft / vp.clientWidth);
+        setActivePage(idx);
+      }, 80);
+    });
+  })();
+
+  document.getElementById('btnActivarTC').onclick = ()=>{
+    settings.tcActivado = true;
+    saveSettingsLS();
+    updatePagerVisibility();
+    showToast('Tarjetas de crédito activadas · desliza a la izquierda para verlas');
+  };
+  document.getElementById('swTcActivado').onclick = ()=>{
+    if(settings.tcActivado){
+      if(data.tarjetas.length>0){
+        showToast('Para desactivar, primero elimina todas tus tarjetas creadas');
+        return;
+      }
+      settings.tcActivado = false;
+    } else {
+      settings.tcActivado = true;
+    }
+    saveSettingsLS();
+    setSwitch('swTcActivado', settings.tcActivado);
+    updatePagerVisibility();
+  };
+
+  // ---------- Init ----------
+  loadAll();
+  accrueInterest();
+  const huboAutomaticos = processAutomaticos();
+  const huboCuotas = processPlanesCuotas();
+  buildPickers();
+  render();
+  updatePagerVisibility();
+
+  // Dibuja las gráficas siempre al abrir, sin depender de en qué página quede el usuario
+  // (evita que queden en blanco si el salto inicial de página se desincroniza).
+  renderGraficas();
+  if(settings.tcActivado) renderGraficasTC();
+
+  const vpInit = document.getElementById('pagerViewport');
+  requestAnimationFrame(()=>{
+    vpInit.scrollLeft = vpInit.clientWidth; // abre directo en Cuentas (página 1), sin animación
+    // Verifica dónde quedó realmente el scroll en vez de asumirlo, para que el indicador
+    // y el FAB nunca queden desincronizados con lo que se ve en pantalla.
+    requestAnimationFrame(()=>{
+      const idxReal = vpInit.clientWidth ? Math.round(vpInit.scrollLeft / vpInit.clientWidth) : 1;
+      setActivePage(idxReal);
+    });
+  });
+
+  if(huboAutomaticos || huboCuotas) showToast('Se registraron movimientos programados automáticos');
+  processQuickAdd();
+})();
+</script>
+</body>
+</html>
