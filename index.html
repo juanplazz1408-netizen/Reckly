@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Reckly</title>
+
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Reckly">
+<meta name="theme-color" content="#152238">
+<meta name="format-detection" content="telephone=no">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://accounts.google.com https://cdnjs.cloudflare.com; connect-src 'self' https://sheets.googleapis.com https://www.googleapis.com https://oauth2.googleapis.com https://accounts.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; frame-src https://accounts.google.com; object-src 'none'; media-src 'none'; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=(), usb=()">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.1/chart.umd.min.js"></script>
+<style>
+  :root{
+    --ink:#152238; --ink-soft:#3c4a63; --paper:#f0f3f7; --card:#ffffff; --line:#e4e8f0;
+    --mint:#2dd4a7; --mint-deep:#159a80; --mint-soft:#d9f5ec;
+    --up:#159a80; --up-soft:#d9f5ec;
+    --down:#c1443c; --down-soft:#fbe6e4; --radius:16px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  button, input, select, textarea{ font-family:inherit; }
+  html,body{margin:0; padding:0; background:var(--paper); overscroll-behavior-y:none; font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;}
+  .app{
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:var(--ink);
+    max-width:480px; margin:0 auto;
+    padding:calc(12px + env(safe-area-inset-top)) 14px 96px;
+    min-height:100vh; background:var(--paper);
+  }
+  .num{font-family:'Inter',-apple-system,sans-serif; font-variant-numeric:tabular-nums; font-feature-settings:'tnum' 1;}
+
+  header.top{display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; gap:8px;}
+  header.top .brand{display:flex; align-items:center; gap:8px;}
+  header.top .brand-badge{width:28px; height:28px; border-radius:8px; background:var(--ink); display:flex; align-items:center; justify-content:center; font-size:13px; color:var(--mint); font-weight:800; flex-shrink:0;}
+  header.top h1{font-size:16px; font-weight:800; letter-spacing:-.01em; color:var(--ink); margin:0;}
+  .icon-btn{
+    width:34px; height:34px; border-radius:10px; border:1px solid var(--line); background:var(--card);
+    display:flex; align-items:center; justify-content:center; font-size:15px; cursor:pointer; flex-shrink:0;
+    box-shadow:0 1px 2px rgba(21,34,56,.04);
+  }
+  .icon-btn:active{background:var(--line);}
+  .tc-dot{position:absolute; top:5px; right:5px; width:7px; height:7px; border-radius:50%; background:var(--mint-deep); border:1.5px solid var(--card);}
+  .hdr-actions{display:flex; gap:6px;}
+
+  .banner{
+    background:var(--mint-soft); border:1px solid var(--mint-deep); border-radius:12px; padding:10px 12px;
+    display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px; font-size:12.5px; color:#0d6650;
+  }
+  .banner button{
+    background:var(--ink); color:#fff; border:none; padding:8px 12px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; flex-shrink:0;
+  }
+
+  .ticker{background:linear-gradient(150deg, var(--ink) 45%, #0f3d34); color:#fff; border-radius:var(--radius); padding:18px; margin-bottom:14px; position:relative; overflow:hidden; box-shadow:0 10px 24px rgba(21,34,56,.18);}
+  .ticker::after{content:""; position:absolute; right:-40px; top:-50px; width:150px; height:150px; border-radius:50%; background:radial-gradient(circle, rgba(45,212,167,.32), transparent 70%); pointer-events:none;}
+  .ticker-row{display:flex; align-items:flex-start; justify-content:space-between; position:relative; z-index:1;}
+  .ticker .clickable{cursor:pointer;}
+  .ticker .label{font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; opacity:.65; margin-bottom:4px; display:flex; align-items:center; gap:5px;}
+  .ticker .label .chev{opacity:.6; font-size:9px;}
+  .ticker .total{font-size:30px; font-weight:700; letter-spacing:-.02em;}
+  .ticker .sub{font-size:11.5px; opacity:.6; margin-top:5px;}
+  .eye-btn{background:rgba(255,255,255,.14); border:none; width:32px; height:32px; border-radius:9px; color:#fff; font-size:14px; cursor:pointer; flex-shrink:0;}
+  .eye-btn:active{background:rgba(255,255,255,.24);}
+
+  .section-title{font-size:11.5px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-soft); margin:18px 2px 9px; display:flex; justify-content:space-between; align-items:center;}
+
+  .cuentas{display:grid; grid-template-columns:1fr 1fr; gap:9px;}
+  .cuenta-card{
+    background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px 12px 11px;
+    display:flex; flex-direction:column; gap:7px; cursor:pointer; position:relative;
+    box-shadow:0 1px 3px rgba(21,34,56,.05); transition:background .15s, border-color .15s;
+  }
+  .cuenta-card.excluded{opacity:.5;}
+  .cuenta-card .crow{display:flex; align-items:center; justify-content:space-between;}
+  .cuenta-badge{width:28px; height:28px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:14.5px; flex-shrink:0;}
+  .cuenta-eye{width:26px; height:26px; border-radius:8px; border:none; background:transparent; font-size:13px; cursor:pointer; color:var(--ink-soft); flex-shrink:0; position:relative; z-index:2; pointer-events:auto;}
+  .cuenta-eye:active{background:var(--paper);}
+  .cuenta-card .nombre{font-size:12px; font-weight:700; color:var(--ink-soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .cuenta-card .saldo{font-size:16.5px; font-weight:700;}
+  .cuenta-card .badge{font-size:9px; background:var(--up-soft); color:var(--up); padding:2px 6px; border-radius:6px; font-weight:700; align-self:flex-start;}
+  .cuenta-card.add{align-items:center; justify-content:center; color:var(--mint-deep); border-style:dashed; border-color:var(--mint-soft); font-size:22px; min-height:74px; box-shadow:none;}
+
+  .mov-list{display:flex; flex-direction:column; gap:7px;}
+  .mov-item{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:11px 12px; display:flex; align-items:center; gap:10px; box-shadow:0 1px 3px rgba(21,34,56,.05);}
+  .mov-icon{width:32px; height:32px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; flex-shrink:0;}
+  .mov-icon.in{background:var(--up-soft); color:var(--up);}
+  .mov-icon.out{background:var(--down-soft); color:var(--down);}
+  .mov-mid{flex:1; min-width:0;}
+  .mov-desc{font-size:13px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .mov-meta{font-size:11px; color:var(--ink-soft); margin-top:1px;}
+  .mov-amt{font-size:13.5px; font-weight:700; flex-shrink:0;}
+  .mov-amt.in{color:var(--up);} .mov-amt.out{color:var(--down);}
+  .empty{color:var(--ink-soft); font-size:12.5px; text-align:center; padding:22px 10px; border:1px dashed var(--line); border-radius:14px;}
+
+  .fab{
+    position:fixed; left:50%; transform:translateX(-50%); bottom:calc(16px + env(safe-area-inset-bottom));
+    background:var(--mint-deep); color:#fff; border:none; border-radius:999px; padding:14px 24px; font-size:14px; font-weight:700;
+    box-shadow:0 10px 22px rgba(21,154,128,.35); display:flex; align-items:center; gap:8px; cursor:pointer;
+    max-width:440px; width:calc(100% - 28px); justify-content:center;
+  }
+  .fab:active{filter:brightness(.95); transform:translateX(-50%) scale(.98);}
+
+  .sheet-overlay{position:fixed; inset:0; background:rgba(21,34,56,.45); display:flex; align-items:flex-end; justify-content:center; opacity:0; pointer-events:none; transition:opacity .18s ease; z-index:50;}
+  .sheet-overlay.show{opacity:1; pointer-events:auto;}
+  .sheet{background:var(--paper); width:100%; max-width:480px; border-radius:20px 20px 0 0; padding:18px 16px calc(18px + env(safe-area-inset-bottom)); transform:translateY(100%); transition:transform .22s ease; max-height:85vh; overflow-y:auto;}
+  .sheet-overlay.show .sheet{transform:translateY(0);}
+  .sheet h2{font-size:16px; margin:0 0 14px; font-weight:800;}
+  .field{margin-bottom:12px;}
+  .field label{display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-soft); margin-bottom:5px;}
+  .field input, .field select{width:100%; padding:12px 12px; border-radius:11px; border:1px solid var(--line); background:var(--card); font-size:15px; color:var(--ink); font-family:inherit;}
+  .field input.num-input{font-family:'Inter',sans-serif; font-variant-numeric:tabular-nums;}
+  .toggle2{display:flex; gap:8px;}
+  .toggle2 button{flex:1; padding:11px; border-radius:11px; border:1px solid var(--line); background:var(--card); font-size:13.5px; font-weight:700; color:var(--ink-soft); cursor:pointer;}
+  .toggle2 button.sel.in{background:var(--up-soft); border-color:var(--up); color:var(--up);}
+  .toggle2 button.sel.out{background:var(--down-soft); border-color:var(--down); color:var(--down);}
+  .sheet-actions{display:flex; gap:9px; margin-top:6px;}
+  .btn{flex:1; padding:13px; border-radius:11px; border:none; font-size:14px; font-weight:700; cursor:pointer;}
+  .btn.primary{background:var(--ink); color:#fff;}
+  .btn.ghost{background:var(--card); color:var(--ink-soft); border:1px solid var(--line);}
+  .btn.danger{background:var(--down-soft); color:var(--down);}
+  .btn:disabled{opacity:.4;}
+  .btn:active{filter:brightness(.95);}
+
+  .swrow{display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--line);}
+  .swrow:last-child{border-bottom:none;}
+  .swrow .swlabel{font-size:13.5px; font-weight:600;}
+  .swtoggle{width:44px; height:26px; border-radius:999px; background:var(--line); position:relative; cursor:pointer; transition:background .15s; flex-shrink:0;}
+  .swtoggle.on{background:var(--up);}
+  .swtoggle .knob{position:absolute; top:3px; left:3px; width:20px; height:20px; border-radius:50%; background:#fff; transition:left .15s; box-shadow:0 1px 3px rgba(0,0,0,.25);}
+  .swtoggle.on .knob{left:21px;}
+
+  .picker-row{display:flex; flex-wrap:wrap; gap:7px; margin-bottom:10px;}
+  .emoji-opt{width:36px; height:36px; border-radius:10px; background:var(--card); border:1px solid var(--line); display:flex; align-items:center; justify-content:center; font-size:17px; cursor:pointer;}
+  .emoji-opt.sel{border-color:var(--mint-deep); background:var(--mint-soft); box-shadow:0 0 0 1px var(--mint-deep) inset;}
+  .color-opt{width:28px; height:28px; border-radius:50%; cursor:pointer; border:2px solid transparent; box-shadow:0 0 0 1px var(--line);}
+  .color-opt.sel{border-color:#fff; box-shadow:0 0 0 2px var(--ink);}
+
+  .toast{position:fixed; top:calc(14px + env(safe-area-inset-top)); left:50%; transform:translateX(-50%) translateY(-140%); opacity:0; pointer-events:none; z-index:60; background:var(--ink); color:#fff; font-size:12.5px; font-weight:600; padding:9px 16px; border-radius:16px; transition:transform .25s ease, opacity .25s ease; white-space:normal; max-width:88vw; text-align:center; line-height:1.4;}
+  .toast.show{transform:translateX(-50%) translateY(0); opacity:1; pointer-events:auto;}
+
+  .status-line{font-size:11.5px; color:var(--ink-soft); display:flex; align-items:center; gap:6px; margin-bottom:14px;}
+  .dot{width:7px; height:7px; border-radius:50%; background:var(--down); flex-shrink:0;}
+  .dot.on{background:var(--up);}
+  .status-line.err{cursor:pointer; text-decoration:underline;}
+
+  .error-overlay{position:fixed; inset:0; background:rgba(21,34,56,.5); display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity .18s ease; z-index:70; padding:20px;}
+  .error-overlay.show{opacity:1; pointer-events:auto;}
+  .error-card{background:var(--card); border-radius:16px; padding:20px; max-width:400px; width:100%; max-height:80vh; overflow-y:auto;}
+  .error-card .etitle{display:flex; align-items:center; gap:8px; font-size:15px; font-weight:700; color:var(--down); margin-bottom:10px;}
+  .error-card .efriendly{font-size:13.5px; line-height:1.5; color:var(--ink); margin-bottom:14px;}
+  .error-card .etech-label{font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-soft); margin-bottom:5px;}
+  .error-card .etech{font-family:ui-monospace,monospace; font-size:11.5px; background:var(--paper); border:1px solid var(--line); border-radius:8px; padding:9px 10px; color:var(--ink-soft); word-break:break-word; margin-bottom:14px; max-height:110px; overflow-y:auto;}
+  .error-card .eactions{display:flex; gap:8px;}
+
+  .auto-item{background:var(--card); border:1px solid var(--line); border-radius:11px; padding:10px 11px; display:flex; align-items:center; gap:10px; margin-bottom:8px;}
+  .auto-mid{flex:1; min-width:0;}
+  .auto-title{font-size:12.5px; font-weight:700;}
+  .auto-meta{font-size:11px; color:var(--ink-soft); margin-top:1px;}
+  .auto-del{width:26px; height:26px; border-radius:8px; border:none; background:var(--down-soft); color:var(--down); font-size:13px; cursor:pointer; flex-shrink:0;}
+  .add-auto-btn{width:100%; padding:11px; border-radius:11px; border:1px dashed var(--mint-deep); background:var(--mint-soft); color:var(--mint-deep); font-size:13px; font-weight:700; cursor:pointer; margin-bottom:4px;}
+
+  .guide-link{display:block; width:100%; text-align:left; padding:12px 13px; border-radius:11px; border:1px solid var(--line); background:var(--card); font-size:13.5px; font-weight:600; color:var(--ink); cursor:pointer; margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;}
+  .guide-step{display:flex; gap:11px; margin-bottom:16px;}
+  .guide-num{width:26px; height:26px; border-radius:50%; background:var(--ink); color:#fff; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+  .guide-step-title{font-size:13.5px; font-weight:700; margin-bottom:3px;}
+  .guide-step-desc{font-size:12.5px; color:var(--ink-soft); line-height:1.5;}
+  .guide-step-desc code{background:var(--paper); padding:1px 5px; border-radius:5px; font-family:ui-monospace,monospace; font-size:11px; word-break:break-all;}
+
+  .page-indicator{display:flex; align-items:center; justify-content:center; gap:7px; margin-bottom:14px;}
+  .ind-dot{width:6px; height:6px; border-radius:50%; background:var(--line); transition:background .2s, width .2s;}
+  .ind-dot.active{background:var(--ink); width:16px; border-radius:4px;}
+  .ind-label{font-size:11.5px; font-weight:700; color:var(--ink-soft); margin-left:4px;}
+  .tc-activate-link{width:100%; margin-top:14px; padding:11px; border-radius:12px; border:1px dashed var(--line); background:transparent; color:var(--ink-soft); font-size:12px; font-weight:600; cursor:pointer;}
+  .tc-activate-link:active{background:var(--card);}
+  .pager-viewport{overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; scrollbar-width:none;}
+  .pager-viewport::-webkit-scrollbar{display:none;}
+  .pager-track{display:flex;}
+  .pager-page{flex:0 0 100%; min-width:100%; scroll-snap-align:start;}
+
+  .chart-card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px; margin-bottom:8px; box-shadow:0 1px 3px rgba(21,34,56,.05);}
+  .chart-canvas-wrap{position:relative; height:210px; margin-bottom:8px;}
+  .legend-row{display:flex; align-items:center; gap:8px; padding:7px 0; border-bottom:1px solid var(--line); font-size:12.5px;}
+  .legend-row:last-child{border-bottom:none;}
+  .legend-dot{width:10px; height:10px; border-radius:50%; flex-shrink:0;}
+  .legend-name{flex:1; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .legend-val{color:var(--ink-soft); font-size:11.5px; flex-shrink:0;}
+  .range-tabs{display:flex; gap:6px; margin-bottom:12px;}
+  .range-tab, .range-tab-tc{flex:1; padding:7px; border-radius:8px; border:1px solid var(--line); background:var(--card); font-size:11.5px; font-weight:700; color:var(--ink-soft); cursor:pointer; text-align:center;}
+  .range-tab.active, .range-tab-tc.active{background:var(--ink); color:#fff; border-color:var(--ink);}
+</style>
+</head>
+<body>
+
+<div class="app" id="app">
+  <header class="top">
+    <div class="brand">
+      <div class="brand-badge">$</div>
+      <h1>Reckly</h1>
+    </div>
+    <div class="hdr-actions">
+      <button class="icon-btn" id="btnRefresh" title="Actualizar">🔄</button>
+      <button class="icon-btn" id="btnTC" title="Tarjetas de crédito" style="position:relative;">💳<span class="tc-dot" id="tcDot" style="display:none;"></span></button>
+      <button class="icon-btn" id="btnSheetLink" title="Ver hoja" style="display:none;">📄</button>
+      <button class="icon-btn" id="btnSettings" title="Ajustes">⚙️</button>
+    </div>
+  </header>
+
+  <div class="banner" id="banner" style="display:none;">
+    <span>☁️ Conecta Google Drive para respaldar tus movimientos en la nube</span>
+    <button id="btnConnect">Conectar</button>
+  </div>
+
+  <div class="status-line" id="statusLine" style="display:none;">
+    <span class="dot" id="statusDot"></span>
+    <span id="statusText"></span>
+  </div>
+
+  <div class="page-indicator" id="pageIndicator">
+    <span class="ind-dot" data-i="0"></span>
+    <span class="ind-dot" data-i="1"></span>
+    <span class="ind-dot" data-i="2"></span>
+    <span class="ind-dot" data-i="3"></span>
+    <span class="ind-label" id="pageLabel">Cuentas</span>
+  </div>
+
+  <div class="pager-viewport" id="pagerViewport">
+    <div class="pager-track" id="pagerTrack">
+
+      <div class="pager-page" id="pageGraficas">
+        <div class="section-title">Distribución de cuentas</div>
+        <div class="chart-card">
+          <div class="chart-canvas-wrap"><canvas id="donutChart"></canvas></div>
+          <div class="empty" id="donutEmpty" style="display:none;">Activa al menos una cuenta en el total para ver esta gráfica.</div>
+          <div id="donutLegend"></div>
+        </div>
+
+        <div class="section-title">Evolución de saldos</div>
+        <div class="chart-card">
+          <div class="range-tabs">
+            <button class="range-tab" data-range="7">7D</button>
+            <button class="range-tab" data-range="30">30D</button>
+            <button class="range-tab active" data-range="365">1A</button>
+            <button class="range-tab" data-range="0">Todo</button>
+          </div>
+          <div class="chart-canvas-wrap"><canvas id="lineChart"></canvas></div>
+          <div class="empty" id="lineEmpty" style="display:none;">Todavía no tienes cuentas para graficar.</div>
+        </div>
+      </div>
+
+      <div class="pager-page" id="pageCuentas">
+        <div class="ticker">
+          <div class="ticker-row">
+            <div class="clickable" id="tickerInfo">
+              <div class="label">Saldo total disponible <span class="chev">▾</span></div>
+              <div class="total num" id="totalSaldo">$ 0</div>
+              <div class="sub" id="cuentasCount">Sin cuentas todavía</div>
+            </div>
+            <button class="eye-btn" id="btnEye">👁️</button>
+          </div>
+        </div>
+
+        <div class="section-title">Cuentas</div>
+        <div class="cuentas" id="cuentasGrid"></div>
+
+        <div class="section-title">Movimientos recientes</div>
+        <div class="mov-list" id="movList"></div>
+
+        <button class="tc-activate-link" id="btnActivarTC" style="display:none;">💳 ¿Usas tarjetas de crédito? Actívalas aquí</button>
+      </div>
+
+      <div class="pager-page" id="pageTarjetas">
+        <div class="ticker">
+          <div class="ticker-row">
+            <div class="clickable" id="tickerInfoTC">
+              <div class="label">Cupo total disponible <span class="chev">▾</span></div>
+              <div class="total num" id="totalTC">$ 0</div>
+              <div class="sub" id="tarjetasCount">Sin tarjetas todavía</div>
+            </div>
+            <button class="eye-btn" id="btnEyeTC">👁️</button>
+          </div>
+        </div>
+
+        <div class="section-title">Tarjetas de crédito</div>
+        <div class="cuentas" id="tarjetasGrid"></div>
+
+        <div class="section-title">Movimientos recientes</div>
+        <div class="mov-list" id="movListTC"></div>
+      </div>
+
+      <div class="pager-page" id="pageGraficasTC">
+        <div class="field" style="margin-bottom:14px;">
+          <label>Tarjeta a analizar</label>
+          <select id="graficaTCSelect"></select>
+        </div>
+
+        <div class="section-title">Uso actual del cupo</div>
+        <div class="chart-card">
+          <div class="chart-canvas-wrap"><canvas id="donutChartTC"></canvas></div>
+          <div class="empty" id="donutTCEmpty" style="display:none;">Agrega una tarjeta para ver esta gráfica.</div>
+          <div id="donutTCLegend"></div>
+        </div>
+
+        <div class="section-title">Evolución del uso del cupo</div>
+        <div class="chart-card">
+          <div class="range-tabs">
+            <button class="range-tab-tc" data-rangetc="7">7D</button>
+            <button class="range-tab-tc" data-rangetc="30">30D</button>
+            <button class="range-tab-tc active" data-rangetc="365">1A</button>
+            <button class="range-tab-tc" data-rangetc="0">Todo</button>
+          </div>
+          <div class="chart-canvas-wrap"><canvas id="lineChartTC"></canvas></div>
+          <div class="empty" id="lineTCEmpty" style="display:none;">Agrega una tarjeta para ver esta gráfica.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <button class="fab" id="btnAddMov">＋ Registrar movimiento</button>
+  <button class="fab" id="btnAddMovTC" style="display:none;">＋ Registrar movimiento</button>
+</div>
+
+<!-- Ajustes -->
+<div class="sheet-overlay" id="overlaySettings">
+  <div class="sheet">
+    <h2>Ajustes</h2>
+    <div class="sheet-actions" style="margin-bottom:14px;">
+      <button class="btn ghost" id="shareShortcutHelp">Compartir guía de Atajo</button>
+    </div>
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+      <div style="font-size:11px; color:var(--ink-soft);">Nombres exactos de tus cuentas:</div>
+      <button class="icon-btn" id="btnCopyAccounts" title="Copiar lista" style="width:28px; height:28px; font-size:12px;">📋</button>
+    </div>
+    <div id="shortcutAccountsList" style="font-size:12.5px; color:var(--ink); margin-bottom:16px; line-height:1.6;"></div>
+
+    <button class="guide-link" id="openGuideCC">📲 Guía: botón en Centro de Control <span>›</span></button>
+    <button class="guide-link" id="openGuideWidget">🧩 Guía: widget en pantalla de inicio <span>›</span></button>
+    <button class="guide-link" id="btnExportBackup">💾 Descargar copia de seguridad <span>›</span></button>
+    <button class="guide-link" id="btnImportBackup">📥 Restaurar desde copia de seguridad <span>›</span></button>
+    <input type="file" id="fileImportBackup" accept="application/json,.json" style="display:none;">
+    <button class="guide-link" id="btnDisconnectGoogle" style="color:var(--down);">🔌 Desconectar Google Drive <span>›</span></button>
+
+    <div style="font-size:11px; color:var(--ink-soft); margin:14px 0 10px;">Reckly · build 2026-08-16-19</div>
+    <div class="sheet-actions">
+      <button class="btn primary" id="cancelSettings">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Activar/desactivar tarjetas de crédito -->
+<div class="sheet-overlay" id="overlayTC">
+  <div class="sheet">
+    <h2>💳 Tarjetas de crédito</h2>
+    <div class="swrow">
+      <span class="swlabel">Activar módulo de tarjetas</span>
+      <div class="swtoggle" id="swTcActivado"><div class="knob"></div></div>
+    </div>
+    <div style="font-size:11.5px; color:var(--ink-soft); margin-top:10px; line-height:1.5;">Si no usas tarjetas de crédito, puedes dejarlo apagado. Para desactivarlo después de usarlo, primero tienes que eliminar todas tus tarjetas creadas.</div>
+    <div class="sheet-actions" style="margin-top:16px;">
+      <button class="btn primary" id="closeOverlayTC">Listo</button>
+    </div>
+  </div>
+</div>
+
+<!-- Guía: Centro de Control -->
+<div class="sheet-overlay" id="overlayGuideCC">
+  <div class="sheet">
+    <h2>📲 Botón en Centro de Control</h2>
+    <div id="guideCCSteps"></div>
+    <div class="sheet-actions">
+      <button class="btn primary" id="closeGuideCC">Entendido</button>
+    </div>
+  </div>
+</div>
+
+<!-- Guía: Widget -->
+<div class="sheet-overlay" id="overlayGuideWidget">
+  <div class="sheet">
+    <h2>🧩 Widget en pantalla de inicio</h2>
+    <div id="guideWidgetSteps"></div>
+    <div class="sheet-actions">
+      <button class="btn primary" id="closeGuideWidget">Entendido</button>
+    </div>
+  </div>
+</div>
+
+<!-- Qué cuentas suman al total -->
+<div class="sheet-overlay" id="overlayTotalConfig">
+  <div class="sheet">
+    <h2>¿Qué cuentas suman al total?</h2>
+    <div id="totalConfigList"></div>
+    <div class="sheet-actions">
+      <button class="btn primary" id="closeTotalConfig">Listo</button>
+    </div>
+  </div>
+</div>
+
+<!-- Agregar / editar cuenta -->
+<div class="sheet-overlay" id="overlayCuenta">
+  <div class="sheet">
+    <h2 id="cuentaTitulo">Agregar cuenta</h2>
+    <div class="field">
+      <label>Nombre de la cuenta</label>
+      <input type="text" id="inCuentaNombre" placeholder="" maxlength="60">
+    </div>
+    <div class="field" id="fieldSaldoInicial">
+      <label>Saldo inicial</label>
+      <input type="text" id="inCuentaSaldo" class="num-input" placeholder="" inputmode="numeric">
+    </div>
+    <div class="field">
+      <label>Ícono (opcional)</label>
+      <div class="picker-row" id="emojiPicker"></div>
+    </div>
+    <div class="field">
+      <label>Color (opcional)</label>
+      <div class="picker-row" id="colorPicker"></div>
+    </div>
+    <div class="swrow">
+      <span class="swlabel">Incluir en el total disponible</span>
+      <div class="swtoggle on" id="swIncluir"><div class="knob"></div></div>
+    </div>
+    <div class="swrow">
+      <span class="swlabel">Tiene rendimiento (interés)</span>
+      <div class="swtoggle" id="swRendimiento"><div class="knob"></div></div>
+    </div>
+    <div class="field" id="fieldEA" style="display:none;">
+      <label>Tasa efectiva anual (E.A. %)</label>
+      <input type="number" id="inEA" class="num-input" placeholder="Ej. 12.5" inputmode="decimal">
+    </div>
+    <div class="swrow">
+      <span class="swlabel">Programar movimientos automáticos</span>
+      <div class="swtoggle" id="swProgramar"><div class="knob"></div></div>
+    </div>
+    <div id="automaticosSection" style="display:none; margin-top:8px;">
+      <div id="automaticosList"></div>
+      <button type="button" class="add-auto-btn" id="btnAddAutomatico">＋ Agregar programación</button>
+    </div>
+    <div class="sheet-actions">
+      <button class="btn ghost" id="cancelCuenta">Cancelar</button>
+      <button class="btn primary" id="saveCuenta">Guardar cuenta</button>
+    </div>
+    <div class="sheet-actions" id="deleteRow" style="display:none; margin-top:6px;">
+      <button class="btn danger" id="deleteCuenta">Eliminar esta cuenta</button>
+    </div>
+  </div>
+</div>
+
+<!-- Agregar programación automática -->
+<div class="sheet-overlay" id="overlayAutomatico">
+  <div class="sheet">
+    <h2>Programar movimiento automático</h2>
+    <div class="field">
+      <label>Tipo</label>
+      <div class="toggle2">
+        <button type="button" id="autoTipoIngreso" class="sel in">Ingreso</button>
+        <button type="button" id="autoTipoEgreso">Egreso</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Categoría (opcional)</label>
+      <select id="inAutoCategoria"></select>
+    </div>
+    <div class="field">
+      <label>Monto</label>
+      <input type="text" id="inAutoMonto" class="num-input" placeholder="" inputmode="numeric">
+    </div>
+    <div class="field">
+      <label>Descripción (opcional)</label>
+      <input type="text" id="inAutoDesc" placeholder="Ej. Nómina, Arriendo..." maxlength="200">
+    </div>
+    <div class="field">
+      <label>Fecha y hora del primer movimiento</label>
+      <input type="datetime-local" id="inAutoFecha">
+    </div>
+    <div class="field">
+      <label>Frecuencia</label>
+      <select id="selAutoFrecuencia">
+        <option value="una_vez">Solo una vez</option>
+        <option value="diaria">Diaria</option>
+        <option value="semanal">Semanal</option>
+        <option value="quincenal">Cada 15 días</option>
+        <option value="mensual" selected>Mensual (mismo día cada mes)</option>
+        <option value="anual">Anual</option>
+      </select>
+    </div>
+    <div class="sheet-actions">
+      <button class="btn ghost" id="cancelAutomatico">Cancelar</button>
+      <button class="btn primary" id="saveAutomatico">Agregar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Qué tarjetas suman al total -->
+<div class="sheet-overlay" id="overlayTotalTCConfig">
+  <div class="sheet">
+    <h2>¿Qué tarjetas suman al total?</h2>
+    <div id="totalTCConfigList"></div>
+    <div class="sheet-actions">
+      <button class="btn primary" id="closeTotalTCConfig">Listo</button>
+    </div>
+  </div>
+</div>
+
+<!-- Agregar / editar tarjeta de crédito -->
+<div class="sheet-overlay" id="overlayTarjeta">
+  <div class="sheet">
+    <h2 id="tarjetaTitulo">Agregar tarjeta</h2>
+    <div class="field">
+      <label>Nombre de la tarjeta</label>
+      <input type="text" id="inTarjetaNombre" placeholder="" maxlength="60">
+    </div>
+    <div class="field" id="fieldCupoInicial">
+      <label>Cupo disponible inicial</label>
+      <input type="text" id="inTarjetaCupo" class="num-input" placeholder="" inputmode="numeric">
+      <div style="font-size:11px; color:var(--ink-soft); margin-top:6px;">Cuánto cupo tenías disponible al momento de agregar la tarjeta. Después se ajusta solo con tus compras y pagos.</div>
+    </div>
+    <div class="field">
+      <label>Ícono (opcional)</label>
+      <div class="picker-row" id="emojiPickerTC"></div>
+    </div>
+    <div class="field">
+      <label>Color (opcional)</label>
+      <div class="picker-row" id="colorPickerTC"></div>
+    </div>
+    <div class="swrow">
+      <span class="swlabel">Incluir en el total de tarjetas</span>
+      <div class="swtoggle on" id="swIncluirTC"><div class="knob"></div></div>
+    </div>
+    <div class="sheet-actions">
+      <button class="btn ghost" id="cancelTarjeta">Cancelar</button>
+      <button class="btn primary" id="saveTarjeta">Guardar tarjeta</button>
+    </div>
+    <div class="sheet-actions" id="deleteRowTC" style="display:none; margin-top:6px;">
+      <button class="btn danger" id="deleteTarjeta">Eliminar esta tarjeta</button>
+    </div>
+  </div>
+</div>
+
+<!-- Registrar movimiento -->
+<div class="sheet-overlay" id="overlayMov">
+  <div class="sheet">
+    <h2>Registrar movimiento</h2>
+    <div class="field">
+      <label>Tipo</label>
+      <div class="toggle2">
+        <button type="button" id="tipoIngreso" class="sel in">Ingreso</button>
+        <button type="button" id="tipoEgreso">Egreso</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Cuenta</label>
+      <select id="inMovCuenta"></select>
+    </div>
+    <div class="field">
+      <label>Categoría (opcional)</label>
+      <select id="inMovCategoria"></select>
+    </div>
+    <div class="field">
+      <label>Monto</label>
+      <input type="text" id="inMovMonto" class="num-input" placeholder="" inputmode="numeric">
+    </div>
+    <div class="field">
+      <label>Descripción (opcional)</label>
+      <input type="text" id="inMovDesc" placeholder="Ej. Mercado, pago cliente..." maxlength="200">
+    </div>
+    <div class="sheet-actions">
+      <button class="btn ghost" id="cancelMov">Cancelar</button>
+      <button class="btn primary" id="saveMov">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Registrar movimiento de tarjeta -->
+<div class="sheet-overlay" id="overlayMovTC">
+  <div class="sheet">
+    <h2>Registrar movimiento de tarjeta</h2>
+    <div class="field">
+      <label>Tipo</label>
+      <div class="toggle2">
+        <button type="button" id="tcTipoCompra" class="sel out">Compra</button>
+        <button type="button" id="tcTipoPago">Pago</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Tarjeta</label>
+      <select id="inMovTCTarjeta"></select>
+    </div>
+    <div class="field">
+      <label>Monto</label>
+      <input type="text" id="inMovTCMonto" class="num-input" placeholder="" inputmode="numeric">
+    </div>
+    <div class="field">
+      <label>Descripción (opcional)</label>
+      <input type="text" id="inMovTCDesc" placeholder="Ej. Mercado, tecnología...">
+    </div>
+
+    <div class="field" id="fieldPagoCuenta" style="display:none;">
+      <label>¿Desde qué cuenta se paga?</label>
+      <select id="inMovTCCuentaPago"></select>
+    </div>
+
+    <div id="compraProgramarBlock">
+      <div class="swrow">
+        <span class="swlabel">Programar pago automático de compra</span>
+        <div class="swtoggle" id="swProgramarCompra"><div class="knob"></div></div>
+      </div>
+      <div id="programarCompraFields" style="display:none;">
+        <div class="field">
+          <label>¿A cuántas cuotas?</label>
+          <input type="number" id="inCompraCuotas" min="1" placeholder="Ej. 6">
+        </div>
+        <div class="field">
+          <label>Fecha y hora del primer pago</label>
+          <input type="datetime-local" id="inCompraFecha">
+        </div>
+        <div class="swrow">
+          <span class="swlabel">¿Aplica interés?</span>
+          <div class="swtoggle" id="swCompraInteres"><div class="knob"></div></div>
+        </div>
+        <div class="field" id="fieldCompraEA" style="display:none;">
+          <label>Tasa efectiva anual (E.A. %)</label>
+          <input type="number" id="inCompraEA" placeholder="Ej. 24" inputmode="decimal">
+        </div>
+        <div class="field">
+          <label>Cuenta que pagará las cuotas</label>
+          <select id="inCompraCuenta"></select>
+        </div>
+        <div style="font-size:11.5px; color:var(--ink-soft); margin:-4px 0 12px;" id="cuotaPreview"></div>
+      </div>
+    </div>
+
+    <div class="sheet-actions">
+      <button class="btn ghost" id="cancelMovTC">Cancelar</button>
+      <button class="btn primary" id="saveMovTC">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="error-overlay" id="errorOverlay">
+  <div class="error-card">
+    <div class="etitle">⚠️ <span id="errorTitle">No se pudo conectar</span></div>
+    <div class="efriendly" id="errorFriendly"></div>
+    <div class="etech-label">Detalle técnico (para revisar conmigo si sigue fallando)</div>
+    <div class="etech" id="errorTech"></div>
+    <div class="eactions">
+      <button class="btn ghost" id="errorCopy">Copiar detalle</button>
+      <button class="btn primary" id="errorClose">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
